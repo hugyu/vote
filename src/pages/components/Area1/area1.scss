@@ -1,0 +1,59 @@
+.area1 {
+  margin: 20px 15px;
+  //   height: 1000px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  .area-item {
+    margin-bottom: 20px;
+    width: 48%;
+    background-color: #fff;
+    height: 500px;
+    border-radius: 25px;
+    position: relative;
+    .area-image-container {
+      height: 70%;
+      width: 100%;
+      position: relative;
+      .area-image {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        top: 0;
+        left: 0;
+        border-radius: 25px;
+      }
+    }
+    .ticket-count {
+      height: 20px;
+      font-size: 34px;
+      color: #999;
+      margin-bottom: 40px;
+    }
+    .ossa-button--normal {
+      max-width: 350px;
+      border: 0;
+      font-size: 38px;
+      .ossa-button__text {
+        font-size: 36px;
+        letter-spacing: 10px;
+        // font-family:
+      }
+    }
+    .button {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 89px;
+      text-align: center;
+      line-height: 89px;
+      border-bottom-left-radius: 15px;
+      border-bottom-right-radius: 15px;
+      background-color: #014ea9;
+      color: #fff;
+    }
+  }
+}
