@@ -1,9 +1,9 @@
 module.exports = (app) => {
     // path:路径
     // callback:回调
-    app.use('/mineral', require('./mineral_water'))
-   app.use('/yoghurt',require('./yoghurt'))
-   app.use('/drinks',require('./drinks'))
-   app.use('/pure_milk',require('./pure_milk'))
+    app.use(require('./mineral_water'))
+   app.use(require('./yoghurt'))
+   app.use(require('./drinks'))
+   app.use(require('./pure_milk'))
     
 }

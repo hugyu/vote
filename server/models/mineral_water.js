@@ -31,6 +31,7 @@ router.get("/mineral", async (req, res) => {
     const strsql = "select * from mineral_water";
     try {
       const result = await sqlQuery(strsql);
+      console.log(result);
       res.send({
         code: 1,
         message: "请求成功",
