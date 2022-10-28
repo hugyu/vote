@@ -60,7 +60,7 @@ function Index() {
       </View>
       <View className="tab-container">
         <OsTabs
-          size="large"
+          // size="large"
           renderHeader={
             <OsTabsHeader
               size="large"
@@ -88,7 +88,7 @@ function Index() {
           }
         >
           <OsTabsPanel current={tabIndex} index={0}>
-            <Area1 />
+            <Area1 index={ index} />
           </OsTabsPanel>
           <OsTabsPanel current={tabIndex} index={1}>
             <Area2 />
