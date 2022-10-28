@@ -16,7 +16,12 @@ const config = {
     options: {}
   },
   framework: "react",
-  compiler: "webpack5",
+  compiler: {
+    type: 'webpack5',
+    prebundle: {
+      exclude: ['ossaui']
+    }
+  },
   cache: {
     enable: false // Webpack 持久化缓存配置，建议开启。默认配置请参考：https://docs.taro.zone/docs/config-detail#cache
   },
@@ -69,17 +74,12 @@ const config = {
   }
 };
 
-module.exports = function(merge) {
+module.exports = function (merge) {
+  
   if (process.env.NODE_ENV === "development") {
     return merge(
       {
-        framework: "react",
-        compiler: {
-          type: "webpack5",
-          prebundle: {
-            exclude: ["ossaui"]
-          }
-        }
+
       },
       config,
       require("./dev")
