@@ -16,7 +16,7 @@ const sqlQuery = require("../mysql");
 //         id int auto_increment,
 //         label varchar(255) not null,
 //         imgUrl char(255) not null,
-//         ticket_count int not null default 0, 
+//         ticket_count int not null default 0,
 //         primary key (id)
 //     ) engine=innodb;
 //     `;
@@ -32,20 +32,39 @@ const sqlQuery = require("../mysql");
 // };
 // createTable();
 router.get("/pure_milk", async (req, res) => {
-    const strsql = "select * from pure_milk";
-    try {
-      const result = await sqlQuery(strsql);
-      res.send({
-        code: 1,
-        message: "请求成功",
-        result
-      });
-    } catch (error) {
-      res.send({
-        code: -1,
-        message: "失败"
-      });
-    }
-  });
-  
-  module.exports = router;
+  const strsql = "select * from pure_milk";
+  try {
+    const result = await sqlQuery(strsql);
+    res.send({
+      code: 1,
+      message: "请求成功",
+      result
+    });
+  } catch (error) {
+    res.send({
+      code: -1,
+      message: "失败"
+    });
+  }
+});
+router.get("/pure_milk/vote", async (req, res) => {
+  const { ticket_count, label } = req.query;
+  const strsql = `update pure_milk set ticket_count = ${Number(ticket_count) +
+    1} where label = '${label}'`;
+  try {
+    const result = await sqlQuery(strsql);
+    console.log(result);
+    res.send({
+      code: 1,
+      message: "请求成功",
+      result
+    });
+  } catch (error) {
+    console.log(error);
+    res.send({
+      code: -1,
+      message: "失败"
+    });
+  }
+});
+module.exports = router;

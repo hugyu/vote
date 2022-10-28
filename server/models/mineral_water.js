@@ -13,7 +13,7 @@ const sqlQuery = require("../mysql");
 //         label varchar(255) not null,
 //         imgUrl char(255) not null,
 //         ticket_count int not null default 0,
-//         primary key (id) 
+//         primary key (id)
 //     ) engine=innodb;
 //     `;
 //     await sqlQuery(createTableSql);
@@ -28,21 +28,41 @@ const sqlQuery = require("../mysql");
 // };
 // createTable();
 router.get("/mineral", async (req, res) => {
-    const strsql = "select * from mineral_water";
-    try {
-      const result = await sqlQuery(strsql);
-      console.log(result);
-      res.send({
-        code: 1,
-        message: "请求成功",
-        result
-      });
-    } catch (error) {
-      res.send({
-        code: -1,
-        message: "失败"
-      });
-    }
-  });
-  
-  module.exports = router;
+  const strsql = "select * from mineral_water";
+  try {
+    const result = await sqlQuery(strsql);
+    console.log(result);
+    res.send({
+      code: 1,
+      message: "请求成功",
+      result
+    });
+  } catch (error) {
+    res.send({
+      code: -1,
+      message: "失败"
+    });
+  }
+});
+router.get("/mineral/vote", async (req, res) => {
+  const { ticket_count, label } = req.query;
+  const strsql = `update mineral_water set ticket_count = ${Number(
+    ticket_count
+  ) + 1} where label = '${label}'`;
+  try {
+    const result = await sqlQuery(strsql);
+    console.log(result);
+    res.send({
+      code: 1,
+      message: "请求成功",
+      result
+    });
+  } catch (error) {
+    console.log(error);
+    res.send({
+      code: -1,
+      message: "失败"
+    });
+  }
+});
+module.exports = router;

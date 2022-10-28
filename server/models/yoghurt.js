@@ -35,20 +35,39 @@ const sqlQuery = require("../mysql");
 // };
 // createTable();
 router.get("/yoghurt", async (req, res) => {
-    const strsql = "select * from yoghurt";
-    try {
-      const result = await sqlQuery(strsql);
-      res.send({
-        code: 1,
-        message: "请求成功",
-        result
-      });
-    } catch (error) {
-      res.send({
-        code: -1,
-        message: "失败"
-      });
-    }
-  });
-  
-  module.exports = router;
+  const strsql = "select * from yoghurt";
+  try {
+    const result = await sqlQuery(strsql);
+    res.send({
+      code: 1,
+      message: "请求成功",
+      result
+    });
+  } catch (error) {
+    res.send({
+      code: -1,
+      message: "失败"
+    });
+  }
+});
+router.get("/yoghurt/vote", async (req, res) => {
+  const { ticket_count, label } = req.query;
+  const strsql = `update yoghurt set ticket_count = ${Number(ticket_count) +
+    1} where label = '${label}'`;
+  try {
+    const result = await sqlQuery(strsql);
+    console.log(result);
+    res.send({
+      code: 1,
+      message: "请求成功",
+      result
+    });
+  } catch (error) {
+    console.log(error);
+    res.send({
+      code: -1,
+      message: "失败"
+    });
+  }
+});
+module.exports = router;
