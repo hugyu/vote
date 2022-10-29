@@ -50,7 +50,10 @@ router.get("/mineral/vote", async (req, res) => {
     ticket_count
   ) + 1} where label = '${label}'`;
   try {
-    const result = await sqlQuery(strsql);
+    await sqlQuery(strsql);
+    const strsql2 = "select * from mineral_water";
+    const result = await sqlQuery(strsql2);
+    
     console.log(result);
     res.send({
       code: 1,

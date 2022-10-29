@@ -53,11 +53,14 @@ router.get("/drinks/vote", async (req, res) => {
   const { ticket_count, label } = req.query;
   const strsql = `update drinks set ticket_count = ${Number(ticket_count) +
     1} where label = '${label}'`;
+  
   try {
-    const result = await sqlQuery(strsql);
+    await sqlQuery(strsql);
+    const strsql2 = "select * from drinks";
+    const result = await sqlQuery(strsql2);
     console.log(result);
     res.send({
-      code: 1,
+      code: 1, 
       message: "请求成功",
       result
     });

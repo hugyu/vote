@@ -52,7 +52,9 @@ router.get("/pure_milk/vote", async (req, res) => {
   const strsql = `update pure_milk set ticket_count = ${Number(ticket_count) +
     1} where label = '${label}'`;
   try {
-    const result = await sqlQuery(strsql);
+    await sqlQuery(strsql);
+    const strsql2 = "select * from pure_milk";
+    const result = await sqlQuery(strsql2);
     console.log(result);
     res.send({
       code: 1,
