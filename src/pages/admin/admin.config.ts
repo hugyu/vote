@@ -1,4 +1,4 @@
 export default definePageConfig({
-    navigationBarTitleText: '后台管理'
+    navigationBarTitleText: '后台管理',
   })
   

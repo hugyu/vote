@@ -19,6 +19,7 @@ const config = {
   compiler: {
     type: 'webpack5',
     prebundle: {
+      enable:false,
       exclude: ['ossaui']
     }
   },
