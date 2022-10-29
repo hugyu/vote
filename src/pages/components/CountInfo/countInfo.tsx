@@ -4,7 +4,7 @@ function CountInfo() {
     return <View className="count-info">
     <View className="item">
       <Text className="top">4</Text>
-      <Text className="bottom">参与选手</Text>
+      <Text className="bottom">参与饮品</Text>
     </View>
     <View className="item">
       <Text className="top">2</Text>
