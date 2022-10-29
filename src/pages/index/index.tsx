@@ -13,6 +13,7 @@ import banner from "../../assets/banner.png";
 import "./index.scss";
 import Area2 from "../components/Area2/area2";
 import Area1 from "../components/Area1/area1";
+import CountInfo from "../components/CountInfo/countInfo";
 const INFO = ["矿泉水", "牛奶", "饮料","酸奶"];
 function Index() {
   // 修改picker选择的下标
@@ -30,20 +31,7 @@ function Index() {
         <Text>h公司饮品投票</Text>
         <Text className="right">—</Text>
       </View>
-      <View className="count-info">
-        <View className="item">
-          <Text className="top">4</Text>
-          <Text className="bottom">参与选手</Text>
-        </View>
-        <View className="item">
-          <Text className="top">2</Text>
-          <Text className="bottom">累计票数</Text>
-        </View>
-        <View className="item">
-          <Text className="top">7631</Text>
-          <Text className="bottom">访问量</Text>
-        </View>
-      </View>
+      <CountInfo/>
       <View className="picker-container">
         <OsPicker
           className="picker"
