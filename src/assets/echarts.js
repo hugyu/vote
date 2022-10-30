@@ -1406,6 +1406,21 @@
     return el.nodeName.toUpperCase() === 'CANVAS';
   }
 
+  var replaceReg = /([&<>"'])/g;
+  var replaceMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    '\'': '&#39;'
+  };
+
+  function encodeHTML(source) {
+    return source == null ? '' : (source + '').replace(replaceReg, function (str, c) {
+      return replaceMap[c];
+    });
+  }
+
   var MOUSE_EVENT_REG = /^(?:mouse|pointer|contextmenu|drag|drop)|click/;
   var _calcOut = [];
   var firefoxNotSupportOffsetXY = env.browser.firefox && +env.browser.version.split('.')[0] < 39;
@@ -1606,6 +1621,523 @@
       }
     }
   };
+
+  function create$1() {
+    return [1, 0, 0, 1, 0, 0];
+  }
+
+  function identity(out) {
+    out[0] = 1;
+    out[1] = 0;
+    out[2] = 0;
+    out[3] = 1;
+    out[4] = 0;
+    out[5] = 0;
+    return out;
+  }
+
+  function copy$1(out, m) {
+    out[0] = m[0];
+    out[1] = m[1];
+    out[2] = m[2];
+    out[3] = m[3];
+    out[4] = m[4];
+    out[5] = m[5];
+    return out;
+  }
+
+  function mul$1(out, m1, m2) {
+    var out0 = m1[0] * m2[0] + m1[2] * m2[1];
+    var out1 = m1[1] * m2[0] + m1[3] * m2[1];
+    var out2 = m1[0] * m2[2] + m1[2] * m2[3];
+    var out3 = m1[1] * m2[2] + m1[3] * m2[3];
+    var out4 = m1[0] * m2[4] + m1[2] * m2[5] + m1[4];
+    var out5 = m1[1] * m2[4] + m1[3] * m2[5] + m1[5];
+    out[0] = out0;
+    out[1] = out1;
+    out[2] = out2;
+    out[3] = out3;
+    out[4] = out4;
+    out[5] = out5;
+    return out;
+  }
+
+  function translate(out, a, v) {
+    out[0] = a[0];
+    out[1] = a[1];
+    out[2] = a[2];
+    out[3] = a[3];
+    out[4] = a[4] + v[0];
+    out[5] = a[5] + v[1];
+    return out;
+  }
+
+  function rotate(out, a, rad) {
+    var aa = a[0];
+    var ac = a[2];
+    var atx = a[4];
+    var ab = a[1];
+    var ad = a[3];
+    var aty = a[5];
+    var st = Math.sin(rad);
+    var ct = Math.cos(rad);
+    out[0] = aa * ct + ab * st;
+    out[1] = -aa * st + ab * ct;
+    out[2] = ac * ct + ad * st;
+    out[3] = -ac * st + ct * ad;
+    out[4] = ct * atx + st * aty;
+    out[5] = ct * aty - st * atx;
+    return out;
+  }
+
+  function scale$1(out, a, v) {
+    var vx = v[0];
+    var vy = v[1];
+    out[0] = a[0] * vx;
+    out[1] = a[1] * vy;
+    out[2] = a[2] * vx;
+    out[3] = a[3] * vy;
+    out[4] = a[4] * vx;
+    out[5] = a[5] * vy;
+    return out;
+  }
+
+  function invert(out, a) {
+    var aa = a[0];
+    var ac = a[2];
+    var atx = a[4];
+    var ab = a[1];
+    var ad = a[3];
+    var aty = a[5];
+    var det = aa * ad - ab * ac;
+
+    if (!det) {
+      return null;
+    }
+
+    det = 1.0 / det;
+    out[0] = ad * det;
+    out[1] = -ab * det;
+    out[2] = -ac * det;
+    out[3] = aa * det;
+    out[4] = (ac * aty - ad * atx) * det;
+    out[5] = (ab * atx - aa * aty) * det;
+    return out;
+  }
+
+  function clone$2(a) {
+    var b = create$1();
+    copy$1(b, a);
+    return b;
+  }
+
+  var matrix = (Object.freeze || Object)({
+    create: create$1,
+    identity: identity,
+    copy: copy$1,
+    mul: mul$1,
+    translate: translate,
+    rotate: rotate,
+    scale: scale$1,
+    invert: invert,
+    clone: clone$2
+  });
+
+  var Point = function () {
+    function Point(x, y) {
+      this.x = x || 0;
+      this.y = y || 0;
+    }
+
+    Point.prototype.copy = function (other) {
+      this.x = other.x;
+      this.y = other.y;
+      return this;
+    };
+
+    Point.prototype.clone = function () {
+      return new Point(this.x, this.y);
+    };
+
+    Point.prototype.set = function (x, y) {
+      this.x = x;
+      this.y = y;
+      return this;
+    };
+
+    Point.prototype.equal = function (other) {
+      return other.x === this.x && other.y === this.y;
+    };
+
+    Point.prototype.add = function (other) {
+      this.x += other.x;
+      this.y += other.y;
+      return this;
+    };
+
+    Point.prototype.scale = function (scalar) {
+      this.x *= scalar;
+      this.y *= scalar;
+    };
+
+    Point.prototype.scaleAndAdd = function (other, scalar) {
+      this.x += other.x * scalar;
+      this.y += other.y * scalar;
+    };
+
+    Point.prototype.sub = function (other) {
+      this.x -= other.x;
+      this.y -= other.y;
+      return this;
+    };
+
+    Point.prototype.dot = function (other) {
+      return this.x * other.x + this.y * other.y;
+    };
+
+    Point.prototype.len = function () {
+      return Math.sqrt(this.x * this.x + this.y * this.y);
+    };
+
+    Point.prototype.lenSquare = function () {
+      return this.x * this.x + this.y * this.y;
+    };
+
+    Point.prototype.normalize = function () {
+      var len = this.len();
+      this.x /= len;
+      this.y /= len;
+      return this;
+    };
+
+    Point.prototype.distance = function (other) {
+      var dx = this.x - other.x;
+      var dy = this.y - other.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    Point.prototype.distanceSquare = function (other) {
+      var dx = this.x - other.x;
+      var dy = this.y - other.y;
+      return dx * dx + dy * dy;
+    };
+
+    Point.prototype.negate = function () {
+      this.x = -this.x;
+      this.y = -this.y;
+      return this;
+    };
+
+    Point.prototype.transform = function (m) {
+      if (!m) {
+        return;
+      }
+
+      var x = this.x;
+      var y = this.y;
+      this.x = m[0] * x + m[2] * y + m[4];
+      this.y = m[1] * x + m[3] * y + m[5];
+      return this;
+    };
+
+    Point.prototype.toArray = function (out) {
+      out[0] = this.x;
+      out[1] = this.y;
+      return out;
+    };
+
+    Point.prototype.fromArray = function (input) {
+      this.x = input[0];
+      this.y = input[1];
+    };
+
+    Point.set = function (p, x, y) {
+      p.x = x;
+      p.y = y;
+    };
+
+    Point.copy = function (p, p2) {
+      p.x = p2.x;
+      p.y = p2.y;
+    };
+
+    Point.len = function (p) {
+      return Math.sqrt(p.x * p.x + p.y * p.y);
+    };
+
+    Point.lenSquare = function (p) {
+      return p.x * p.x + p.y * p.y;
+    };
+
+    Point.dot = function (p0, p1) {
+      return p0.x * p1.x + p0.y * p1.y;
+    };
+
+    Point.add = function (out, p0, p1) {
+      out.x = p0.x + p1.x;
+      out.y = p0.y + p1.y;
+    };
+
+    Point.sub = function (out, p0, p1) {
+      out.x = p0.x - p1.x;
+      out.y = p0.y - p1.y;
+    };
+
+    Point.scale = function (out, p0, scalar) {
+      out.x = p0.x * scalar;
+      out.y = p0.y * scalar;
+    };
+
+    Point.scaleAndAdd = function (out, p0, p1, scalar) {
+      out.x = p0.x + p1.x * scalar;
+      out.y = p0.y + p1.y * scalar;
+    };
+
+    Point.lerp = function (out, p0, p1, t) {
+      var onet = 1 - t;
+      out.x = onet * p0.x + t * p1.x;
+      out.y = onet * p0.y + t * p1.y;
+    };
+
+    return Point;
+  }();
+
+  var mathMin = Math.min;
+  var mathMax = Math.max;
+  var lt = new Point();
+  var rb = new Point();
+  var lb = new Point();
+  var rt = new Point();
+  var minTv = new Point();
+  var maxTv = new Point();
+
+  var BoundingRect = function () {
+    function BoundingRect(x, y, width, height) {
+      if (width < 0) {
+        x = x + width;
+        width = -width;
+      }
+
+      if (height < 0) {
+        y = y + height;
+        height = -height;
+      }
+
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+    }
+
+    BoundingRect.prototype.union = function (other) {
+      var x = mathMin(other.x, this.x);
+      var y = mathMin(other.y, this.y);
+
+      if (isFinite(this.x) && isFinite(this.width)) {
+        this.width = mathMax(other.x + other.width, this.x + this.width) - x;
+      } else {
+        this.width = other.width;
+      }
+
+      if (isFinite(this.y) && isFinite(this.height)) {
+        this.height = mathMax(other.y + other.height, this.y + this.height) - y;
+      } else {
+        this.height = other.height;
+      }
+
+      this.x = x;
+      this.y = y;
+    };
+
+    BoundingRect.prototype.applyTransform = function (m) {
+      BoundingRect.applyTransform(this, this, m);
+    };
+
+    BoundingRect.prototype.calculateTransform = function (b) {
+      var a = this;
+      var sx = b.width / a.width;
+      var sy = b.height / a.height;
+      var m = create$1();
+      translate(m, m, [-a.x, -a.y]);
+      scale$1(m, m, [sx, sy]);
+      translate(m, m, [b.x, b.y]);
+      return m;
+    };
+
+    BoundingRect.prototype.intersect = function (b, mtv) {
+      if (!b) {
+        return false;
+      }
+
+      if (!(b instanceof BoundingRect)) {
+        b = BoundingRect.create(b);
+      }
+
+      var a = this;
+      var ax0 = a.x;
+      var ax1 = a.x + a.width;
+      var ay0 = a.y;
+      var ay1 = a.y + a.height;
+      var bx0 = b.x;
+      var bx1 = b.x + b.width;
+      var by0 = b.y;
+      var by1 = b.y + b.height;
+      var overlap = !(ax1 < bx0 || bx1 < ax0 || ay1 < by0 || by1 < ay0);
+
+      if (mtv) {
+        var dMin = Infinity;
+        var dMax = 0;
+        var d0 = Math.abs(ax1 - bx0);
+        var d1 = Math.abs(bx1 - ax0);
+        var d2 = Math.abs(ay1 - by0);
+        var d3 = Math.abs(by1 - ay0);
+        var dx = Math.min(d0, d1);
+        var dy = Math.min(d2, d3);
+
+        if (ax1 < bx0 || bx1 < ax0) {
+          if (dx > dMax) {
+            dMax = dx;
+
+            if (d0 < d1) {
+              Point.set(maxTv, -d0, 0);
+            } else {
+              Point.set(maxTv, d1, 0);
+            }
+          }
+        } else {
+          if (dx < dMin) {
+            dMin = dx;
+
+            if (d0 < d1) {
+              Point.set(minTv, d0, 0);
+            } else {
+              Point.set(minTv, -d1, 0);
+            }
+          }
+        }
+
+        if (ay1 < by0 || by1 < ay0) {
+          if (dy > dMax) {
+            dMax = dy;
+
+            if (d2 < d3) {
+              Point.set(maxTv, 0, -d2);
+            } else {
+              Point.set(maxTv, 0, d3);
+            }
+          }
+        } else {
+          if (dx < dMin) {
+            dMin = dx;
+
+            if (d2 < d3) {
+              Point.set(minTv, 0, d2);
+            } else {
+              Point.set(minTv, 0, -d3);
+            }
+          }
+        }
+      }
+
+      if (mtv) {
+        Point.copy(mtv, overlap ? minTv : maxTv);
+      }
+
+      return overlap;
+    };
+
+    BoundingRect.prototype.contain = function (x, y) {
+      var rect = this;
+      return x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
+    };
+
+    BoundingRect.prototype.clone = function () {
+      return new BoundingRect(this.x, this.y, this.width, this.height);
+    };
+
+    BoundingRect.prototype.copy = function (other) {
+      BoundingRect.copy(this, other);
+    };
+
+    BoundingRect.prototype.plain = function () {
+      return {
+        x: this.x,
+        y: this.y,
+        width: this.width,
+        height: this.height
+      };
+    };
+
+    BoundingRect.prototype.isFinite = function () {
+      return isFinite(this.x) && isFinite(this.y) && isFinite(this.width) && isFinite(this.height);
+    };
+
+    BoundingRect.prototype.isZero = function () {
+      return this.width === 0 || this.height === 0;
+    };
+
+    BoundingRect.create = function (rect) {
+      return new BoundingRect(rect.x, rect.y, rect.width, rect.height);
+    };
+
+    BoundingRect.copy = function (target, source) {
+      target.x = source.x;
+      target.y = source.y;
+      target.width = source.width;
+      target.height = source.height;
+    };
+
+    BoundingRect.applyTransform = function (target, source, m) {
+      if (!m) {
+        if (target !== source) {
+          BoundingRect.copy(target, source);
+        }
+
+        return;
+      }
+
+      if (m[1] < 1e-5 && m[1] > -1e-5 && m[2] < 1e-5 && m[2] > -1e-5) {
+        var sx = m[0];
+        var sy = m[3];
+        var tx = m[4];
+        var ty = m[5];
+        target.x = source.x * sx + tx;
+        target.y = source.y * sy + ty;
+        target.width = source.width * sx;
+        target.height = source.height * sy;
+
+        if (target.width < 0) {
+          target.x += target.width;
+          target.width = -target.width;
+        }
+
+        if (target.height < 0) {
+          target.y += target.height;
+          target.height = -target.height;
+        }
+
+        return;
+      }
+
+      lt.x = lb.x = source.x;
+      lt.y = rt.y = source.y;
+      rb.x = rt.x = source.x + source.width;
+      rb.y = lb.y = source.y + source.height;
+      lt.transform(m);
+      rt.transform(m);
+      rb.transform(m);
+      lb.transform(m);
+      target.x = mathMin(lt.x, rb.x, lb.x, rt.x);
+      target.y = mathMin(lt.y, rb.y, lb.y, rt.y);
+      var maxX = mathMax(lt.x, rb.x, lb.x, rt.x);
+      var maxY = mathMax(lt.y, rb.y, lb.y, rt.y);
+      target.width = maxX - target.x;
+      target.height = maxY - target.y;
+    };
+
+    return BoundingRect;
+  }();
+
   var SILENT = 'silent';
 
   function makeEventPacket(eveType, targetInfo, event) {
@@ -1659,17 +2191,19 @@
   }();
 
   var handlerNames = ['click', 'dblclick', 'mousewheel', 'mouseout', 'mouseup', 'mousedown', 'mousemove', 'contextmenu'];
+  var tmpRect = new BoundingRect(0, 0, 0, 0);
 
   var Handler = function (_super) {
     __extends(Handler, _super);
 
-    function Handler(storage, painter, proxy, painterRoot) {
+    function Handler(storage, painter, proxy, painterRoot, pointerSize) {
       var _this = _super.call(this) || this;
 
       _this._hovered = new HoveredResult(0, 0);
       _this.storage = storage;
       _this.painter = painter;
       _this.painterRoot = painterRoot;
+      _this._pointerSize = pointerSize;
       proxy = proxy || new EmptyProxy();
       _this.proxy = null;
 
@@ -1799,16 +2333,45 @@
     Handler.prototype.findHover = function (x, y, exclude) {
       var list = this.storage.getDisplayList();
       var out = new HoveredResult(x, y);
+      setHoverTarget(list, out, x, y, exclude);
 
-      for (var i = list.length - 1; i >= 0; i--) {
-        var hoverCheckResult = void 0;
+      if (this._pointerSize && !out.target) {
+        var candidates = [];
+        var pointerSize = this._pointerSize;
+        var targetSizeHalf = pointerSize / 2;
+        var pointerRect = new BoundingRect(x - targetSizeHalf, y - targetSizeHalf, pointerSize, pointerSize);
 
-        if (list[i] !== exclude && !list[i].ignore && (hoverCheckResult = isHover(list[i], x, y))) {
-          !out.topTarget && (out.topTarget = list[i]);
+        for (var i = list.length - 1; i >= 0; i--) {
+          var el = list[i];
 
-          if (hoverCheckResult !== SILENT) {
-            out.target = list[i];
-            break;
+          if (el !== exclude && !el.ignore && !el.ignoreCoarsePointer && (!el.parent || !el.parent.ignoreCoarsePointer)) {
+            tmpRect.copy(el.getBoundingRect());
+
+            if (el.transform) {
+              tmpRect.applyTransform(el.transform);
+            }
+
+            if (tmpRect.intersect(pointerRect)) {
+              candidates.push(el);
+            }
+          }
+        }
+
+        if (candidates.length) {
+          var rStep = 4;
+          var thetaStep = Math.PI / 12;
+          var PI2 = Math.PI * 2;
+
+          for (var r = 0; r < targetSizeHalf; r += rStep) {
+            for (var theta = 0; theta < PI2; theta += thetaStep) {
+              var x1 = x + r * Math.cos(theta);
+              var y1 = y + r * Math.sin(theta);
+              setHoverTarget(candidates, out, x1, y1, exclude);
+
+              if (out.target) {
+                return out;
+              }
+            }
           }
         }
       }
@@ -1900,6 +2463,22 @@
     }
 
     return false;
+  }
+
+  function setHoverTarget(list, out, x, y, exclude) {
+    for (var i = list.length - 1; i >= 0; i--) {
+      var el = list[i];
+      var hoverCheckResult = void 0;
+
+      if (el !== exclude && !el.ignore && (hoverCheckResult = isHover(el, x, y))) {
+        !out.topTarget && (out.topTarget = el);
+
+        if (hoverCheckResult !== SILENT) {
+          out.target = el;
+          break;
+        }
+      }
+    }
   }
 
   function isOutsideBoundary(handlerInstance, x, y) {
@@ -3899,14 +4478,14 @@
           alpha = parseCssFloat(params.pop());
 
         case 'rgb':
-          if (params.length !== 3) {
+          if (params.length >= 3) {
+            setRgba(rgbaArr, parseCssInt(params[0]), parseCssInt(params[1]), parseCssInt(params[2]), params.length === 3 ? alpha : parseCssFloat(params[3]));
+            putToCache(colorStr, rgbaArr);
+            return rgbaArr;
+          } else {
             setRgba(rgbaArr, 0, 0, 0, 1);
             return;
           }
-
-          setRgba(rgbaArr, parseCssInt(params[0]), parseCssInt(params[1]), parseCssInt(params[2]), alpha);
-          putToCache(colorStr, rgbaArr);
-          return rgbaArr;
 
         case 'hsla':
           if (params.length !== 4) {
@@ -5561,127 +6140,6 @@
   var DARK_LABEL_COLOR = '#333';
   var LIGHT_LABEL_COLOR = '#ccc';
   var LIGHTER_LABEL_COLOR = '#eee';
-
-  function create$1() {
-    return [1, 0, 0, 1, 0, 0];
-  }
-
-  function identity(out) {
-    out[0] = 1;
-    out[1] = 0;
-    out[2] = 0;
-    out[3] = 1;
-    out[4] = 0;
-    out[5] = 0;
-    return out;
-  }
-
-  function copy$1(out, m) {
-    out[0] = m[0];
-    out[1] = m[1];
-    out[2] = m[2];
-    out[3] = m[3];
-    out[4] = m[4];
-    out[5] = m[5];
-    return out;
-  }
-
-  function mul$1(out, m1, m2) {
-    var out0 = m1[0] * m2[0] + m1[2] * m2[1];
-    var out1 = m1[1] * m2[0] + m1[3] * m2[1];
-    var out2 = m1[0] * m2[2] + m1[2] * m2[3];
-    var out3 = m1[1] * m2[2] + m1[3] * m2[3];
-    var out4 = m1[0] * m2[4] + m1[2] * m2[5] + m1[4];
-    var out5 = m1[1] * m2[4] + m1[3] * m2[5] + m1[5];
-    out[0] = out0;
-    out[1] = out1;
-    out[2] = out2;
-    out[3] = out3;
-    out[4] = out4;
-    out[5] = out5;
-    return out;
-  }
-
-  function translate(out, a, v) {
-    out[0] = a[0];
-    out[1] = a[1];
-    out[2] = a[2];
-    out[3] = a[3];
-    out[4] = a[4] + v[0];
-    out[5] = a[5] + v[1];
-    return out;
-  }
-
-  function rotate(out, a, rad) {
-    var aa = a[0];
-    var ac = a[2];
-    var atx = a[4];
-    var ab = a[1];
-    var ad = a[3];
-    var aty = a[5];
-    var st = Math.sin(rad);
-    var ct = Math.cos(rad);
-    out[0] = aa * ct + ab * st;
-    out[1] = -aa * st + ab * ct;
-    out[2] = ac * ct + ad * st;
-    out[3] = -ac * st + ct * ad;
-    out[4] = ct * atx + st * aty;
-    out[5] = ct * aty - st * atx;
-    return out;
-  }
-
-  function scale$1(out, a, v) {
-    var vx = v[0];
-    var vy = v[1];
-    out[0] = a[0] * vx;
-    out[1] = a[1] * vy;
-    out[2] = a[2] * vx;
-    out[3] = a[3] * vy;
-    out[4] = a[4] * vx;
-    out[5] = a[5] * vy;
-    return out;
-  }
-
-  function invert(out, a) {
-    var aa = a[0];
-    var ac = a[2];
-    var atx = a[4];
-    var ab = a[1];
-    var ad = a[3];
-    var aty = a[5];
-    var det = aa * ad - ab * ac;
-
-    if (!det) {
-      return null;
-    }
-
-    det = 1.0 / det;
-    out[0] = ad * det;
-    out[1] = -ab * det;
-    out[2] = -ac * det;
-    out[3] = aa * det;
-    out[4] = (ac * aty - ad * atx) * det;
-    out[5] = (ab * atx - aa * aty) * det;
-    return out;
-  }
-
-  function clone$2(a) {
-    var b = create$1();
-    copy$1(b, a);
-    return b;
-  }
-
-  var matrix = (Object.freeze || Object)({
-    create: create$1,
-    identity: identity,
-    copy: copy$1,
-    mul: mul$1,
-    translate: translate,
-    rotate: rotate,
-    scale: scale$1,
-    invert: invert,
-    clone: clone$2
-  });
   var mIdentity = identity;
   var EPSILON$2 = 5e-5;
 
@@ -5946,401 +6404,6 @@
       target[propName] = source[propName];
     }
   }
-
-  var Point = function () {
-    function Point(x, y) {
-      this.x = x || 0;
-      this.y = y || 0;
-    }
-
-    Point.prototype.copy = function (other) {
-      this.x = other.x;
-      this.y = other.y;
-      return this;
-    };
-
-    Point.prototype.clone = function () {
-      return new Point(this.x, this.y);
-    };
-
-    Point.prototype.set = function (x, y) {
-      this.x = x;
-      this.y = y;
-      return this;
-    };
-
-    Point.prototype.equal = function (other) {
-      return other.x === this.x && other.y === this.y;
-    };
-
-    Point.prototype.add = function (other) {
-      this.x += other.x;
-      this.y += other.y;
-      return this;
-    };
-
-    Point.prototype.scale = function (scalar) {
-      this.x *= scalar;
-      this.y *= scalar;
-    };
-
-    Point.prototype.scaleAndAdd = function (other, scalar) {
-      this.x += other.x * scalar;
-      this.y += other.y * scalar;
-    };
-
-    Point.prototype.sub = function (other) {
-      this.x -= other.x;
-      this.y -= other.y;
-      return this;
-    };
-
-    Point.prototype.dot = function (other) {
-      return this.x * other.x + this.y * other.y;
-    };
-
-    Point.prototype.len = function () {
-      return Math.sqrt(this.x * this.x + this.y * this.y);
-    };
-
-    Point.prototype.lenSquare = function () {
-      return this.x * this.x + this.y * this.y;
-    };
-
-    Point.prototype.normalize = function () {
-      var len = this.len();
-      this.x /= len;
-      this.y /= len;
-      return this;
-    };
-
-    Point.prototype.distance = function (other) {
-      var dx = this.x - other.x;
-      var dy = this.y - other.y;
-      return Math.sqrt(dx * dx + dy * dy);
-    };
-
-    Point.prototype.distanceSquare = function (other) {
-      var dx = this.x - other.x;
-      var dy = this.y - other.y;
-      return dx * dx + dy * dy;
-    };
-
-    Point.prototype.negate = function () {
-      this.x = -this.x;
-      this.y = -this.y;
-      return this;
-    };
-
-    Point.prototype.transform = function (m) {
-      if (!m) {
-        return;
-      }
-
-      var x = this.x;
-      var y = this.y;
-      this.x = m[0] * x + m[2] * y + m[4];
-      this.y = m[1] * x + m[3] * y + m[5];
-      return this;
-    };
-
-    Point.prototype.toArray = function (out) {
-      out[0] = this.x;
-      out[1] = this.y;
-      return out;
-    };
-
-    Point.prototype.fromArray = function (input) {
-      this.x = input[0];
-      this.y = input[1];
-    };
-
-    Point.set = function (p, x, y) {
-      p.x = x;
-      p.y = y;
-    };
-
-    Point.copy = function (p, p2) {
-      p.x = p2.x;
-      p.y = p2.y;
-    };
-
-    Point.len = function (p) {
-      return Math.sqrt(p.x * p.x + p.y * p.y);
-    };
-
-    Point.lenSquare = function (p) {
-      return p.x * p.x + p.y * p.y;
-    };
-
-    Point.dot = function (p0, p1) {
-      return p0.x * p1.x + p0.y * p1.y;
-    };
-
-    Point.add = function (out, p0, p1) {
-      out.x = p0.x + p1.x;
-      out.y = p0.y + p1.y;
-    };
-
-    Point.sub = function (out, p0, p1) {
-      out.x = p0.x - p1.x;
-      out.y = p0.y - p1.y;
-    };
-
-    Point.scale = function (out, p0, scalar) {
-      out.x = p0.x * scalar;
-      out.y = p0.y * scalar;
-    };
-
-    Point.scaleAndAdd = function (out, p0, p1, scalar) {
-      out.x = p0.x + p1.x * scalar;
-      out.y = p0.y + p1.y * scalar;
-    };
-
-    Point.lerp = function (out, p0, p1, t) {
-      var onet = 1 - t;
-      out.x = onet * p0.x + t * p1.x;
-      out.y = onet * p0.y + t * p1.y;
-    };
-
-    return Point;
-  }();
-
-  var mathMin = Math.min;
-  var mathMax = Math.max;
-  var lt = new Point();
-  var rb = new Point();
-  var lb = new Point();
-  var rt = new Point();
-  var minTv = new Point();
-  var maxTv = new Point();
-
-  var BoundingRect = function () {
-    function BoundingRect(x, y, width, height) {
-      if (width < 0) {
-        x = x + width;
-        width = -width;
-      }
-
-      if (height < 0) {
-        y = y + height;
-        height = -height;
-      }
-
-      this.x = x;
-      this.y = y;
-      this.width = width;
-      this.height = height;
-    }
-
-    BoundingRect.prototype.union = function (other) {
-      var x = mathMin(other.x, this.x);
-      var y = mathMin(other.y, this.y);
-
-      if (isFinite(this.x) && isFinite(this.width)) {
-        this.width = mathMax(other.x + other.width, this.x + this.width) - x;
-      } else {
-        this.width = other.width;
-      }
-
-      if (isFinite(this.y) && isFinite(this.height)) {
-        this.height = mathMax(other.y + other.height, this.y + this.height) - y;
-      } else {
-        this.height = other.height;
-      }
-
-      this.x = x;
-      this.y = y;
-    };
-
-    BoundingRect.prototype.applyTransform = function (m) {
-      BoundingRect.applyTransform(this, this, m);
-    };
-
-    BoundingRect.prototype.calculateTransform = function (b) {
-      var a = this;
-      var sx = b.width / a.width;
-      var sy = b.height / a.height;
-      var m = create$1();
-      translate(m, m, [-a.x, -a.y]);
-      scale$1(m, m, [sx, sy]);
-      translate(m, m, [b.x, b.y]);
-      return m;
-    };
-
-    BoundingRect.prototype.intersect = function (b, mtv) {
-      if (!b) {
-        return false;
-      }
-
-      if (!(b instanceof BoundingRect)) {
-        b = BoundingRect.create(b);
-      }
-
-      var a = this;
-      var ax0 = a.x;
-      var ax1 = a.x + a.width;
-      var ay0 = a.y;
-      var ay1 = a.y + a.height;
-      var bx0 = b.x;
-      var bx1 = b.x + b.width;
-      var by0 = b.y;
-      var by1 = b.y + b.height;
-      var overlap = !(ax1 < bx0 || bx1 < ax0 || ay1 < by0 || by1 < ay0);
-
-      if (mtv) {
-        var dMin = Infinity;
-        var dMax = 0;
-        var d0 = Math.abs(ax1 - bx0);
-        var d1 = Math.abs(bx1 - ax0);
-        var d2 = Math.abs(ay1 - by0);
-        var d3 = Math.abs(by1 - ay0);
-        var dx = Math.min(d0, d1);
-        var dy = Math.min(d2, d3);
-
-        if (ax1 < bx0 || bx1 < ax0) {
-          if (dx > dMax) {
-            dMax = dx;
-
-            if (d0 < d1) {
-              Point.set(maxTv, -d0, 0);
-            } else {
-              Point.set(maxTv, d1, 0);
-            }
-          }
-        } else {
-          if (dx < dMin) {
-            dMin = dx;
-
-            if (d0 < d1) {
-              Point.set(minTv, d0, 0);
-            } else {
-              Point.set(minTv, -d1, 0);
-            }
-          }
-        }
-
-        if (ay1 < by0 || by1 < ay0) {
-          if (dy > dMax) {
-            dMax = dy;
-
-            if (d2 < d3) {
-              Point.set(maxTv, 0, -d2);
-            } else {
-              Point.set(maxTv, 0, d3);
-            }
-          }
-        } else {
-          if (dx < dMin) {
-            dMin = dx;
-
-            if (d2 < d3) {
-              Point.set(minTv, 0, d2);
-            } else {
-              Point.set(minTv, 0, -d3);
-            }
-          }
-        }
-      }
-
-      if (mtv) {
-        Point.copy(mtv, overlap ? minTv : maxTv);
-      }
-
-      return overlap;
-    };
-
-    BoundingRect.prototype.contain = function (x, y) {
-      var rect = this;
-      return x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
-    };
-
-    BoundingRect.prototype.clone = function () {
-      return new BoundingRect(this.x, this.y, this.width, this.height);
-    };
-
-    BoundingRect.prototype.copy = function (other) {
-      BoundingRect.copy(this, other);
-    };
-
-    BoundingRect.prototype.plain = function () {
-      return {
-        x: this.x,
-        y: this.y,
-        width: this.width,
-        height: this.height
-      };
-    };
-
-    BoundingRect.prototype.isFinite = function () {
-      return isFinite(this.x) && isFinite(this.y) && isFinite(this.width) && isFinite(this.height);
-    };
-
-    BoundingRect.prototype.isZero = function () {
-      return this.width === 0 || this.height === 0;
-    };
-
-    BoundingRect.create = function (rect) {
-      return new BoundingRect(rect.x, rect.y, rect.width, rect.height);
-    };
-
-    BoundingRect.copy = function (target, source) {
-      target.x = source.x;
-      target.y = source.y;
-      target.width = source.width;
-      target.height = source.height;
-    };
-
-    BoundingRect.applyTransform = function (target, source, m) {
-      if (!m) {
-        if (target !== source) {
-          BoundingRect.copy(target, source);
-        }
-
-        return;
-      }
-
-      if (m[1] < 1e-5 && m[1] > -1e-5 && m[2] < 1e-5 && m[2] > -1e-5) {
-        var sx = m[0];
-        var sy = m[3];
-        var tx = m[4];
-        var ty = m[5];
-        target.x = source.x * sx + tx;
-        target.y = source.y * sy + ty;
-        target.width = source.width * sx;
-        target.height = source.height * sy;
-
-        if (target.width < 0) {
-          target.x += target.width;
-          target.width = -target.width;
-        }
-
-        if (target.height < 0) {
-          target.y += target.height;
-          target.height = -target.height;
-        }
-
-        return;
-      }
-
-      lt.x = lb.x = source.x;
-      lt.y = rt.y = source.y;
-      rb.x = rt.x = source.x + source.width;
-      rb.y = lb.y = source.y + source.height;
-      lt.transform(m);
-      rt.transform(m);
-      rb.transform(m);
-      lb.transform(m);
-      target.x = mathMin(lt.x, rb.x, lb.x, rt.x);
-      target.y = mathMin(lt.y, rb.y, lb.y, rt.y);
-      var maxX = mathMax(lt.x, rb.x, lb.x, rt.x);
-      var maxY = mathMax(lt.y, rb.y, lb.y, rt.y);
-      target.width = maxX - target.x;
-      target.height = maxY - target.y;
-    };
-
-    return BoundingRect;
-  }();
 
   var textWidthCache = {};
 
@@ -8074,7 +8137,16 @@
       this.storage = storage;
       this.painter = painter;
       var handerProxy = !env.node && !env.worker && !ssrMode ? new HandlerDomProxy(painter.getViewportRoot(), painter.root) : null;
-      this.handler = new Handler(storage, painter, handerProxy, painter.root);
+      var useCoarsePointer = opts.useCoarsePointer;
+      var usePointerSize = useCoarsePointer == null || useCoarsePointer === 'auto' ? env.touchEventsSupported : !!useCoarsePointer;
+      var defaultPointerSize = 44;
+      var pointerSize;
+
+      if (usePointerSize) {
+        pointerSize = retrieve2(opts.pointerSize, defaultPointerSize);
+      }
+
+      this.handler = new Handler(storage, painter, handerProxy, painter.root, pointerSize);
       this.animation = new Animation({
         stage: {
           update: ssrMode ? null : function () {
@@ -8301,7 +8373,7 @@
     painterCtors[name] = Ctor;
   }
 
-  var version$1 = '5.3.2';
+  var version$1 = '5.4.0';
   var zrender = (Object.freeze || Object)({
     init: init$1,
     dispose: dispose$1,
@@ -8560,12 +8632,28 @@
       return 0;
     }
 
+    var seats = getPercentSeats(valueList, precision);
+    return seats[idx] || 0;
+  }
+  /**
+   * Get a data of given precision, assuring the sum of percentages
+   * in valueList is 1.
+   * The largest remainer method is used.
+   * https://en.wikipedia.org/wiki/Largest_remainder_method
+   *
+   * @param valueList a list of all data
+   * @param precision integer number showing digits of precision
+   * @return {Array<number>}
+   */
+
+
+  function getPercentSeats(valueList, precision) {
     var sum = reduce(valueList, function (acc, val) {
       return acc + (isNaN(val) ? 0 : val);
     }, 0);
 
     if (sum === 0) {
-      return 0;
+      return [];
     }
 
     var digits = Math.pow(10, precision);
@@ -8602,7 +8690,9 @@
       ++currentSum;
     }
 
-    return seats[idx] / digits;
+    return map(seats, function (seat) {
+      return seat / digits;
+    });
   }
   /**
    * Solve the floating point adding problem like 0.1 + 0.2 === 0.30000000000000004
@@ -9030,7 +9120,7 @@
   /**
    * If in __DEV__ environment, get console printable message for users hint.
    * Parameters are separated by ' '.
-   * @usuage
+   * @usage
    * makePrintable('This is an error on', someVar, someObj);
    *
    * @param hintInfo anything about the current execution context to hint users.
@@ -11245,19 +11335,19 @@
     return Displayable;
   }(Element);
 
-  var tmpRect = new BoundingRect(0, 0, 0, 0);
+  var tmpRect$1 = new BoundingRect(0, 0, 0, 0);
   var viewRect = new BoundingRect(0, 0, 0, 0);
 
   function isDisplayableCulled(el, width, height) {
-    tmpRect.copy(el.getBoundingRect());
+    tmpRect$1.copy(el.getBoundingRect());
 
     if (el.transform) {
-      tmpRect.applyTransform(el.transform);
+      tmpRect$1.applyTransform(el.transform);
     }
 
     viewRect.width = width;
     viewRect.height = height;
-    return !tmpRect.intersect(viewRect);
+    return !tmpRect$1.intersect(viewRect);
   }
 
   var mathMin$2 = Math.min;
@@ -17180,9 +17270,11 @@
    */
 
 
-  function subPixelOptimizeLine$1(param) {
-    subPixelOptimizeLine(param.shape, param.shape, param.style);
-    return param;
+  function subPixelOptimizeLine$1(shape, lineWidth) {
+    subPixelOptimizeLine(shape, shape, {
+      lineWidth: lineWidth
+    });
+    return shape;
   }
   /**
    * Sub pixel optimize rect for canvas
@@ -19587,20 +19679,6 @@
   }
 
   var normalizeCssArray$1 = normalizeCssArray;
-  var replaceReg = /([&<>"'])/g;
-  var replaceMap = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    '\'': '&#39;'
-  };
-
-  function encodeHTML(source) {
-    return source == null ? '' : (source + '').replace(replaceReg, function (str, c) {
-      return replaceMap[c];
-    });
-  }
   /**
    * Make value user readable for tooltip and label.
    * "User readable":
@@ -19608,7 +19686,6 @@
    *     Avoid to display an empty string, which users can not recognize there is
    *     a value and it might look like a bug.
    */
-
 
   function makeValueReadable(value, valueType, useUTC) {
     var USER_READABLE_DEFUALT_TIME_PATTERN = '{yyyy}-{MM}-{dd} {HH}:{mm}:{ss}';
@@ -20818,6 +20895,87 @@
    * @return encode Never be `null/undefined`.
    */
 
+
+  function makeSeriesEncodeForNameBased(seriesModel, source, dimCount) {
+    var encode = {};
+    var datasetModel = querySeriesUpstreamDatasetModel(seriesModel); // Currently only make default when using dataset, util more reqirements occur.
+
+    if (!datasetModel) {
+      return encode;
+    }
+
+    var sourceFormat = source.sourceFormat;
+    var dimensionsDefine = source.dimensionsDefine;
+    var potentialNameDimIndex;
+
+    if (sourceFormat === SOURCE_FORMAT_OBJECT_ROWS || sourceFormat === SOURCE_FORMAT_KEYED_COLUMNS) {
+      each(dimensionsDefine, function (dim, idx) {
+        if ((isObject(dim) ? dim.name : dim) === 'name') {
+          potentialNameDimIndex = idx;
+        }
+      });
+    }
+
+    var idxResult = function () {
+      var idxRes0 = {};
+      var idxRes1 = {};
+      var guessRecords = []; // 5 is an experience value.
+
+      for (var i = 0, len = Math.min(5, dimCount); i < len; i++) {
+        var guessResult = doGuessOrdinal(source.data, sourceFormat, source.seriesLayoutBy, dimensionsDefine, source.startIndex, i);
+        guessRecords.push(guessResult);
+        var isPureNumber = guessResult === BE_ORDINAL.Not; // [Strategy of idxRes0]: find the first BE_ORDINAL.Not as the value dim,
+        // and then find a name dim with the priority:
+        // "BE_ORDINAL.Might|BE_ORDINAL.Must" > "other dim" > "the value dim itself".
+
+        if (isPureNumber && idxRes0.v == null && i !== potentialNameDimIndex) {
+          idxRes0.v = i;
+        }
+
+        if (idxRes0.n == null || idxRes0.n === idxRes0.v || !isPureNumber && guessRecords[idxRes0.n] === BE_ORDINAL.Not) {
+          idxRes0.n = i;
+        }
+
+        if (fulfilled(idxRes0) && guessRecords[idxRes0.n] !== BE_ORDINAL.Not) {
+          return idxRes0;
+        } // [Strategy of idxRes1]: if idxRes0 not satisfied (that is, no BE_ORDINAL.Not),
+        // find the first BE_ORDINAL.Might as the value dim,
+        // and then find a name dim with the priority:
+        // "other dim" > "the value dim itself".
+        // That is for backward compat: number-like (e.g., `'3'`, `'55'`) can be
+        // treated as number.
+
+
+        if (!isPureNumber) {
+          if (guessResult === BE_ORDINAL.Might && idxRes1.v == null && i !== potentialNameDimIndex) {
+            idxRes1.v = i;
+          }
+
+          if (idxRes1.n == null || idxRes1.n === idxRes1.v) {
+            idxRes1.n = i;
+          }
+        }
+      }
+
+      function fulfilled(idxResult) {
+        return idxResult.v != null && idxResult.n != null;
+      }
+
+      return fulfilled(idxRes0) ? idxRes0 : fulfilled(idxRes1) ? idxRes1 : null;
+    }();
+
+    if (idxResult) {
+      encode.value = [idxResult.v]; // `potentialNameDimIndex` has highest priority.
+
+      var nameDimIndex = potentialNameDimIndex != null ? potentialNameDimIndex : idxResult.n; // By default, label use itemName in charts.
+      // So we dont set encodeLabel here.
+
+      encode.itemName = [nameDimIndex];
+      encode.seriesName = [nameDimIndex];
+    }
+
+    return encode;
+  }
   /**
    * @return If return null/undefined, indicate that should not use datasetModel.
    */
@@ -30353,6 +30511,33 @@
   // Inlucdes: pieSelect, pieUnSelect, pieToggleSelect, mapSelect, mapUnSelect, mapToggleSelect
 
 
+  function createLegacyDataSelectAction(seriesType, ecRegisterAction) {
+    function getSeriesIndices(ecModel, payload) {
+      var seriesIndices = [];
+      ecModel.eachComponent({
+        mainType: 'series',
+        subType: seriesType,
+        query: payload
+      }, function (seriesModel) {
+        seriesIndices.push(seriesModel.seriesIndex);
+      });
+      return seriesIndices;
+    }
+
+    each([[seriesType + 'ToggleSelect', 'toggleSelect'], [seriesType + 'Select', 'select'], [seriesType + 'UnSelect', 'unselect']], function (eventsMap) {
+      ecRegisterAction(eventsMap[0], function (payload, ecModel, api) {
+        payload = extend({}, payload);
+        {
+          deprecateReplaceLog(payload.type, eventsMap[1]);
+        }
+        api.dispatchAction(extend(payload, {
+          type: eventsMap[1],
+          seriesIndex: getSeriesIndices(ecModel, payload)
+        }));
+      });
+    });
+  }
+
   function handleSeriesLegacySelectEvents(type, eventPostfix, ecIns, ecModel, payload) {
     var legacyEventName = type + eventPostfix;
 
@@ -32289,9 +32474,9 @@
 
 
   var hasWindow = typeof window !== 'undefined';
-  var version = '5.3.3';
+  var version = '5.4.0';
   var dependencies = {
-    zrender: '5.3.2'
+    zrender: '5.4.0'
   };
   var TEST_FRAME_REMAIN_TIME = 1;
   var PRIORITY_PROCESSOR_SERIES_FILTER = 800; // Some data processors depends on the stack result dimension (to calculate data extent).
@@ -32446,12 +32631,14 @@
 
       _this._dom = dom;
       var defaultRenderer = 'canvas';
+      var defaultCoarsePointer = 'auto';
       var defaultUseDirtyRect = false;
       {
         var root =
         /* eslint-disable-next-line */
         hasWindow ? window : global;
         defaultRenderer = root.__ECHARTS__DEFAULT__RENDERER__ || defaultRenderer;
+        defaultCoarsePointer = retrieve2(root.__ECHARTS__DEFAULT__COARSE_POINTER, defaultCoarsePointer);
         var devUseDirtyRect = root.__ECHARTS__DEFAULT__USE_DIRTY_RECT__;
         defaultUseDirtyRect = devUseDirtyRect == null ? defaultUseDirtyRect : devUseDirtyRect;
       }
@@ -32461,7 +32648,9 @@
         width: opts.width,
         height: opts.height,
         ssr: opts.ssr,
-        useDirtyRect: opts.useDirtyRect == null ? defaultUseDirtyRect : opts.useDirtyRect
+        useDirtyRect: retrieve2(opts.useDirtyRect, defaultUseDirtyRect),
+        useCoarsePointer: retrieve2(opts.useCoarsePointer, defaultCoarsePointer),
+        pointerSize: opts.pointerSize
       });
       _this._ssr = opts.ssr; // Expect 60 fps.
 
@@ -38613,7 +38802,8 @@
       if (extent[0] === extent[1]) {
         if (extent[0] !== 0) {
           // Expand extent
-          var expandSize = extent[0]; // In the fowllowing case
+          // Note that extents can be both negative. See #13154
+          var expandSize = Math.abs(extent[0]); // In the fowllowing case
           //      Axis has been fixed max 100
           //      Plus data are all 100 and axis extent are [100, 100].
           // Extend to the both side will cause expanded max is larger than fixed max.
@@ -39902,9 +40092,10 @@
     };
 
     LogScale.prototype.setExtent = function (start, end) {
-      var base = this.base;
-      start = mathLog(start) / mathLog(base);
-      end = mathLog(end) / mathLog(base);
+      var base = mathLog(this.base); // log(-Infinity) is NaN, so safe guard here
+
+      start = mathLog(Math.max(0, start)) / base;
+      end = mathLog(Math.max(0, end)) / base;
       intervalScaleProto.setExtent.call(this, start, end);
     };
     /**
@@ -42713,6 +42904,61 @@
    */
 
 
+  function limitSurfaceAngle(linePoints, surfaceNormal, maxSurfaceAngle) {
+    if (!(maxSurfaceAngle <= 180 && maxSurfaceAngle > 0)) {
+      return;
+    }
+
+    maxSurfaceAngle = maxSurfaceAngle / 180 * Math.PI;
+    pt0.fromArray(linePoints[0]);
+    pt1.fromArray(linePoints[1]);
+    pt2.fromArray(linePoints[2]);
+    Point.sub(dir, pt1, pt0);
+    Point.sub(dir2, pt2, pt1);
+    var len1 = dir.len();
+    var len2 = dir2.len();
+
+    if (len1 < 1e-3 || len2 < 1e-3) {
+      return;
+    }
+
+    dir.scale(1 / len1);
+    dir2.scale(1 / len2);
+    var angleCos = dir.dot(surfaceNormal);
+    var maxSurfaceAngleCos = Math.cos(maxSurfaceAngle);
+
+    if (angleCos < maxSurfaceAngleCos) {
+      // Calculate project point of pt0 on pt1-pt2
+      var d = projectPointToLine(pt1.x, pt1.y, pt2.x, pt2.y, pt0.x, pt0.y, tmpArr, false);
+      tmpProjPoint.fromArray(tmpArr);
+      var HALF_PI = Math.PI / 2;
+      var angle2 = Math.acos(dir2.dot(surfaceNormal));
+      var newAngle = HALF_PI + angle2 - maxSurfaceAngle;
+
+      if (newAngle >= HALF_PI) {
+        // parallel
+        Point.copy(tmpProjPoint, pt2);
+      } else {
+        // Calculate new projected length with limited minTurnAngle and get the new connect point
+        tmpProjPoint.scaleAndAdd(dir2, d / Math.tan(Math.PI / 2 - newAngle)); // Limit the new calculated connect point between pt1 and pt2.
+
+        var t = pt2.x !== pt1.x ? (tmpProjPoint.x - pt1.x) / (pt2.x - pt1.x) : (tmpProjPoint.y - pt1.y) / (pt2.y - pt1.y);
+
+        if (isNaN(t)) {
+          return;
+        }
+
+        if (t < 0) {
+          Point.copy(tmpProjPoint, pt1);
+        } else if (t > 1) {
+          Point.copy(tmpProjPoint, pt2);
+        }
+      }
+
+      tmpProjPoint.toArray(linePoints[1]);
+    }
+  }
+
   function setLabelLineState(labelLine, ignore, stateName, stateModel) {
     var isNormal = stateName === 'normal';
     var stateObj = isNormal ? labelLine : labelLine.ensureState(stateName); // Make sure display.
@@ -44045,6 +44291,8 @@
             });
             clearColor.__canvasGradient = clearColorGradientOrPattern;
           } else if (isImagePatternObject(clearColor)) {
+            clearColor.scaleX = clearColor.scaleX || dpr;
+            clearColor.scaleY = clearColor.scaleY || dpr;
             clearColorGradientOrPattern = createCanvasPattern(ctx, clearColor, {
               dirty: function () {
                 self.setUnpainted();
@@ -46894,6 +47142,7 @@
         points: data.getLayout('largePoints')
       },
       incremental: !!incremental,
+      ignoreCoarsePointer: true,
       z2: 1
     });
     el.baseDimIdx = baseDimIdx;
@@ -47556,14 +47805,14 @@
       var emphasisState = symbolPath.ensureState('emphasis');
       emphasisState.style = emphasisItemStyle;
       symbolPath.ensureState('select').style = selectItemStyle;
-      symbolPath.ensureState('blur').style = blurItemStyle;
+      symbolPath.ensureState('blur').style = blurItemStyle; // null / undefined / true means to use default strategy.
+      // 0 / false / negative number / NaN / Infinity means no scale.
 
-      if (hoverScale) {
-        var scaleRatio = Math.max(isNumber(hoverScale) ? hoverScale : 1.1, 3 / this._sizeY);
-        emphasisState.scaleX = this._sizeX * scaleRatio;
-        emphasisState.scaleY = this._sizeY * scaleRatio;
-      }
+      var scaleRatio = hoverScale == null || hoverScale === true ? Math.max(1.1, 3 / this._sizeY) // PENDING: restrict hoverScale > 1? It seems unreasonable to scale down
+      : isFinite(hoverScale) && hoverScale > 0 ? +hoverScale : 1; // always set scale to allow resetting
 
+      emphasisState.scaleX = this._sizeX * scaleRatio;
+      emphasisState.scaleY = this._sizeY * scaleRatio;
       this.setSymbolScale(1);
       toggleHoverEmphasis(this, focus, blurScope, emphasisDisabled);
     };
@@ -49368,8 +49617,8 @@
             return;
           }
 
-          var zlevel = seriesModel.get('zlevel');
-          var z = seriesModel.get('z');
+          var zlevel = seriesModel.get('zlevel') || 0;
+          var z = seriesModel.get('z') || 0;
           symbol = new Symbol$1(data, dataIndex);
           symbol.x = x;
           symbol.y = y;
@@ -50040,6 +50289,1698 @@
 
 
   use(install$3);
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  var PI2$7 = Math.PI * 2;
+  var RADIAN = Math.PI / 180;
+
+  function getViewRect(seriesModel, api) {
+    return getLayoutRect(seriesModel.getBoxLayoutParams(), {
+      width: api.getWidth(),
+      height: api.getHeight()
+    });
+  }
+
+  function getBasicPieLayout(seriesModel, api) {
+    var viewRect = getViewRect(seriesModel, api);
+    var center = seriesModel.get('center');
+    var radius = seriesModel.get('radius');
+
+    if (!isArray(radius)) {
+      radius = [0, radius];
+    }
+
+    if (!isArray(center)) {
+      center = [center, center];
+    }
+
+    var width = parsePercent$1(viewRect.width, api.getWidth());
+    var height = parsePercent$1(viewRect.height, api.getHeight());
+    var size = Math.min(width, height);
+    var r0 = parsePercent$1(radius[0], size / 2);
+    var r = parsePercent$1(radius[1], size / 2);
+    var cx;
+    var cy;
+    var coordSys = seriesModel.coordinateSystem;
+
+    if (coordSys) {
+      // percentage is not allowed when coordinate system is specified
+      var point = coordSys.dataToPoint(center);
+      cx = point[0] || 0;
+      cy = point[1] || 0;
+    } else {
+      cx = parsePercent$1(center[0], width) + viewRect.x;
+      cy = parsePercent$1(center[1], height) + viewRect.y;
+    }
+
+    return {
+      cx: cx,
+      cy: cy,
+      r0: r0,
+      r: r
+    };
+  }
+
+  function pieLayout(seriesType, ecModel, api) {
+    ecModel.eachSeriesByType(seriesType, function (seriesModel) {
+      var data = seriesModel.getData();
+      var valueDim = data.mapDimension('value');
+      var viewRect = getViewRect(seriesModel, api);
+
+      var _a = getBasicPieLayout(seriesModel, api),
+          cx = _a.cx,
+          cy = _a.cy,
+          r = _a.r,
+          r0 = _a.r0;
+
+      var startAngle = -seriesModel.get('startAngle') * RADIAN;
+      var minAngle = seriesModel.get('minAngle') * RADIAN;
+      var validDataCount = 0;
+      data.each(valueDim, function (value) {
+        !isNaN(value) && validDataCount++;
+      });
+      var sum = data.getSum(valueDim); // Sum may be 0
+
+      var unitRadian = Math.PI / (sum || validDataCount) * 2;
+      var clockwise = seriesModel.get('clockwise');
+      var roseType = seriesModel.get('roseType');
+      var stillShowZeroSum = seriesModel.get('stillShowZeroSum'); // [0...max]
+
+      var extent = data.getDataExtent(valueDim);
+      extent[0] = 0; // In the case some sector angle is smaller than minAngle
+
+      var restAngle = PI2$7;
+      var valueSumLargerThanMinAngle = 0;
+      var currentAngle = startAngle;
+      var dir = clockwise ? 1 : -1;
+      data.setLayout({
+        viewRect: viewRect,
+        r: r
+      });
+      data.each(valueDim, function (value, idx) {
+        var angle;
+
+        if (isNaN(value)) {
+          data.setItemLayout(idx, {
+            angle: NaN,
+            startAngle: NaN,
+            endAngle: NaN,
+            clockwise: clockwise,
+            cx: cx,
+            cy: cy,
+            r0: r0,
+            r: roseType ? NaN : r
+          });
+          return;
+        } // FIXME 兼容 2.0 但是 roseType 是 area 的时候才是这样？
+
+
+        if (roseType !== 'area') {
+          angle = sum === 0 && stillShowZeroSum ? unitRadian : value * unitRadian;
+        } else {
+          angle = PI2$7 / validDataCount;
+        }
+
+        if (angle < minAngle) {
+          angle = minAngle;
+          restAngle -= minAngle;
+        } else {
+          valueSumLargerThanMinAngle += value;
+        }
+
+        var endAngle = currentAngle + dir * angle;
+        data.setItemLayout(idx, {
+          angle: angle,
+          startAngle: currentAngle,
+          endAngle: endAngle,
+          clockwise: clockwise,
+          cx: cx,
+          cy: cy,
+          r0: r0,
+          r: roseType ? linearMap(value, extent, [r0, r]) : r
+        });
+        currentAngle = endAngle;
+      }); // Some sector is constrained by minAngle
+      // Rest sectors needs recalculate angle
+
+      if (restAngle < PI2$7 && validDataCount) {
+        // Average the angle if rest angle is not enough after all angles is
+        // Constrained by minAngle
+        if (restAngle <= 1e-3) {
+          var angle_1 = PI2$7 / validDataCount;
+          data.each(valueDim, function (value, idx) {
+            if (!isNaN(value)) {
+              var layout_1 = data.getItemLayout(idx);
+              layout_1.angle = angle_1;
+              layout_1.startAngle = startAngle + dir * idx * angle_1;
+              layout_1.endAngle = startAngle + dir * (idx + 1) * angle_1;
+            }
+          });
+        } else {
+          unitRadian = restAngle / valueSumLargerThanMinAngle;
+          currentAngle = startAngle;
+          data.each(valueDim, function (value, idx) {
+            if (!isNaN(value)) {
+              var layout_2 = data.getItemLayout(idx);
+              var angle = layout_2.angle === minAngle ? minAngle : value * unitRadian;
+              layout_2.startAngle = currentAngle;
+              layout_2.endAngle = currentAngle + dir * angle;
+              currentAngle += dir * angle;
+            }
+          });
+        }
+      }
+    });
+  }
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+
+  function dataFilter(seriesType) {
+    return {
+      seriesType: seriesType,
+      reset: function (seriesModel, ecModel) {
+        var legendModels = ecModel.findComponents({
+          mainType: 'legend'
+        });
+
+        if (!legendModels || !legendModels.length) {
+          return;
+        }
+
+        var data = seriesModel.getData();
+        data.filterSelf(function (idx) {
+          var name = data.getName(idx); // If in any legend component the status is not selected.
+
+          for (var i = 0; i < legendModels.length; i++) {
+            // @ts-ignore FIXME: LegendModel
+            if (!legendModels[i].isSelected(name)) {
+              return false;
+            }
+          }
+
+          return true;
+        });
+      }
+    };
+  }
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+  // FIXME emphasis label position is not same with normal label position
+
+
+  var RADIAN$1 = Math.PI / 180;
+
+  function adjustSingleSide(list, cx, cy, r, dir, viewWidth, viewHeight, viewLeft, viewTop, farthestX) {
+    if (list.length < 2) {
+      return;
+    }
+
+    function recalculateXOnSemiToAlignOnEllipseCurve(semi) {
+      var rB = semi.rB;
+      var rB2 = rB * rB;
+
+      for (var i = 0; i < semi.list.length; i++) {
+        var item = semi.list[i];
+        var dy = Math.abs(item.label.y - cy); // horizontal r is always same with original r because x is not changed.
+
+        var rA = r + item.len;
+        var rA2 = rA * rA; // Use ellipse implicit function to calculate x
+
+        var dx = Math.sqrt((1 - Math.abs(dy * dy / rB2)) * rA2);
+        var newX = cx + (dx + item.len2) * dir;
+        var deltaX = newX - item.label.x;
+        var newTargetWidth = item.targetTextWidth - deltaX * dir; // text x is changed, so need to recalculate width.
+
+        constrainTextWidth(item, newTargetWidth, true);
+        item.label.x = newX;
+      }
+    } // Adjust X based on the shifted y. Make tight labels aligned on an ellipse curve.
+
+
+    function recalculateX(items) {
+      // Extremes of
+      var topSemi = {
+        list: [],
+        maxY: 0
+      };
+      var bottomSemi = {
+        list: [],
+        maxY: 0
+      };
+
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].labelAlignTo !== 'none') {
+          continue;
+        }
+
+        var item = items[i];
+        var semi = item.label.y > cy ? bottomSemi : topSemi;
+        var dy = Math.abs(item.label.y - cy);
+
+        if (dy >= semi.maxY) {
+          var dx = item.label.x - cx - item.len2 * dir; // horizontal r is always same with original r because x is not changed.
+
+          var rA = r + item.len; // Canculate rB based on the topest / bottemest label.
+
+          var rB = Math.abs(dx) < rA ? Math.sqrt(dy * dy / (1 - dx * dx / rA / rA)) : rA;
+          semi.rB = rB;
+          semi.maxY = dy;
+        }
+
+        semi.list.push(item);
+      }
+
+      recalculateXOnSemiToAlignOnEllipseCurve(topSemi);
+      recalculateXOnSemiToAlignOnEllipseCurve(bottomSemi);
+    }
+
+    var len = list.length;
+
+    for (var i = 0; i < len; i++) {
+      if (list[i].position === 'outer' && list[i].labelAlignTo === 'labelLine') {
+        var dx = list[i].label.x - farthestX;
+        list[i].linePoints[1][0] += dx;
+        list[i].label.x = farthestX;
+      }
+    }
+
+    if (shiftLayoutOnY(list, viewTop, viewTop + viewHeight)) {
+      recalculateX(list);
+    }
+  }
+
+  function avoidOverlap(labelLayoutList, cx, cy, r, viewWidth, viewHeight, viewLeft, viewTop) {
+    var leftList = [];
+    var rightList = [];
+    var leftmostX = Number.MAX_VALUE;
+    var rightmostX = -Number.MAX_VALUE;
+
+    for (var i = 0; i < labelLayoutList.length; i++) {
+      var label = labelLayoutList[i].label;
+
+      if (isPositionCenter(labelLayoutList[i])) {
+        continue;
+      }
+
+      if (label.x < cx) {
+        leftmostX = Math.min(leftmostX, label.x);
+        leftList.push(labelLayoutList[i]);
+      } else {
+        rightmostX = Math.max(rightmostX, label.x);
+        rightList.push(labelLayoutList[i]);
+      }
+    }
+
+    for (var i = 0; i < labelLayoutList.length; i++) {
+      var layout = labelLayoutList[i];
+
+      if (!isPositionCenter(layout) && layout.linePoints) {
+        if (layout.labelStyleWidth != null) {
+          continue;
+        }
+
+        var label = layout.label;
+        var linePoints = layout.linePoints;
+        var targetTextWidth = void 0;
+
+        if (layout.labelAlignTo === 'edge') {
+          if (label.x < cx) {
+            targetTextWidth = linePoints[2][0] - layout.labelDistance - viewLeft - layout.edgeDistance;
+          } else {
+            targetTextWidth = viewLeft + viewWidth - layout.edgeDistance - linePoints[2][0] - layout.labelDistance;
+          }
+        } else if (layout.labelAlignTo === 'labelLine') {
+          if (label.x < cx) {
+            targetTextWidth = leftmostX - viewLeft - layout.bleedMargin;
+          } else {
+            targetTextWidth = viewLeft + viewWidth - rightmostX - layout.bleedMargin;
+          }
+        } else {
+          if (label.x < cx) {
+            targetTextWidth = label.x - viewLeft - layout.bleedMargin;
+          } else {
+            targetTextWidth = viewLeft + viewWidth - label.x - layout.bleedMargin;
+          }
+        }
+
+        layout.targetTextWidth = targetTextWidth;
+        constrainTextWidth(layout, targetTextWidth);
+      }
+    }
+
+    adjustSingleSide(rightList, cx, cy, r, 1, viewWidth, viewHeight, viewLeft, viewTop, rightmostX);
+    adjustSingleSide(leftList, cx, cy, r, -1, viewWidth, viewHeight, viewLeft, viewTop, leftmostX);
+
+    for (var i = 0; i < labelLayoutList.length; i++) {
+      var layout = labelLayoutList[i];
+
+      if (!isPositionCenter(layout) && layout.linePoints) {
+        var label = layout.label;
+        var linePoints = layout.linePoints;
+        var isAlignToEdge = layout.labelAlignTo === 'edge';
+        var padding = label.style.padding;
+        var paddingH = padding ? padding[1] + padding[3] : 0; // textRect.width already contains paddingH if bgColor is set
+
+        var extraPaddingH = label.style.backgroundColor ? 0 : paddingH;
+        var realTextWidth = layout.rect.width + extraPaddingH;
+        var dist = linePoints[1][0] - linePoints[2][0];
+
+        if (isAlignToEdge) {
+          if (label.x < cx) {
+            linePoints[2][0] = viewLeft + layout.edgeDistance + realTextWidth + layout.labelDistance;
+          } else {
+            linePoints[2][0] = viewLeft + viewWidth - layout.edgeDistance - realTextWidth - layout.labelDistance;
+          }
+        } else {
+          if (label.x < cx) {
+            linePoints[2][0] = label.x + layout.labelDistance;
+          } else {
+            linePoints[2][0] = label.x - layout.labelDistance;
+          }
+
+          linePoints[1][0] = linePoints[2][0] + dist;
+        }
+
+        linePoints[1][1] = linePoints[2][1] = label.y;
+      }
+    }
+  }
+  /**
+   * Set max width of each label, and then wrap each label to the max width.
+   *
+   * @param layout label layout
+   * @param availableWidth max width for the label to display
+   * @param forceRecalculate recaculate the text layout even if the current width
+   * is smaller than `availableWidth`. This is useful when the text was previously
+   * wrapped by calling `constrainTextWidth` but now `availableWidth` changed, in
+   * which case, previous wrapping should be redo.
+   */
+
+
+  function constrainTextWidth(layout, availableWidth, forceRecalculate) {
+    if (forceRecalculate === void 0) {
+      forceRecalculate = false;
+    }
+
+    if (layout.labelStyleWidth != null) {
+      // User-defined style.width has the highest priority.
+      return;
+    }
+
+    var label = layout.label;
+    var style = label.style;
+    var textRect = layout.rect;
+    var bgColor = style.backgroundColor;
+    var padding = style.padding;
+    var paddingH = padding ? padding[1] + padding[3] : 0;
+    var overflow = style.overflow; // textRect.width already contains paddingH if bgColor is set
+
+    var oldOuterWidth = textRect.width + (bgColor ? 0 : paddingH);
+
+    if (availableWidth < oldOuterWidth || forceRecalculate) {
+      var oldHeight = textRect.height;
+
+      if (overflow && overflow.match('break')) {
+        // Temporarily set background to be null to calculate
+        // the bounding box without backgroud.
+        label.setStyle('backgroundColor', null); // Set constraining width
+
+        label.setStyle('width', availableWidth - paddingH); // This is the real bounding box of the text without padding
+
+        var innerRect = label.getBoundingRect();
+        label.setStyle('width', Math.ceil(innerRect.width));
+        label.setStyle('backgroundColor', bgColor);
+      } else {
+        var availableInnerWidth = availableWidth - paddingH;
+        var newWidth = availableWidth < oldOuterWidth // Current text is too wide, use `availableWidth` as max width.
+        ? availableInnerWidth : // Current available width is enough, but the text may have
+        // already been wrapped with a smaller available width.
+        forceRecalculate ? availableInnerWidth > layout.unconstrainedWidth // Current available is larger than text width,
+        // so don't constrain width (otherwise it may have
+        // empty space in the background).
+        ? null // Current available is smaller than text width, so
+        // use the current available width as constraining
+        // width.
+        : availableInnerWidth : // Current available width is enough, so no need to
+        // constrain.
+        null;
+        label.setStyle('width', newWidth);
+      }
+
+      var newRect = label.getBoundingRect();
+      textRect.width = newRect.width;
+      var margin = (label.style.margin || 0) + 2.1;
+      textRect.height = newRect.height + margin;
+      textRect.y -= (textRect.height - oldHeight) / 2;
+    }
+  }
+
+  function isPositionCenter(sectorShape) {
+    // Not change x for center label
+    return sectorShape.position === 'center';
+  }
+
+  function pieLabelLayout(seriesModel) {
+    var data = seriesModel.getData();
+    var labelLayoutList = [];
+    var cx;
+    var cy;
+    var hasLabelRotate = false;
+    var minShowLabelRadian = (seriesModel.get('minShowLabelAngle') || 0) * RADIAN$1;
+    var viewRect = data.getLayout('viewRect');
+    var r = data.getLayout('r');
+    var viewWidth = viewRect.width;
+    var viewLeft = viewRect.x;
+    var viewTop = viewRect.y;
+    var viewHeight = viewRect.height;
+
+    function setNotShow(el) {
+      el.ignore = true;
+    }
+
+    function isLabelShown(label) {
+      if (!label.ignore) {
+        return true;
+      }
+
+      for (var key in label.states) {
+        if (label.states[key].ignore === false) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    data.each(function (idx) {
+      var sector = data.getItemGraphicEl(idx);
+      var sectorShape = sector.shape;
+      var label = sector.getTextContent();
+      var labelLine = sector.getTextGuideLine();
+      var itemModel = data.getItemModel(idx);
+      var labelModel = itemModel.getModel('label'); // Use position in normal or emphasis
+
+      var labelPosition = labelModel.get('position') || itemModel.get(['emphasis', 'label', 'position']);
+      var labelDistance = labelModel.get('distanceToLabelLine');
+      var labelAlignTo = labelModel.get('alignTo');
+      var edgeDistance = parsePercent$1(labelModel.get('edgeDistance'), viewWidth);
+      var bleedMargin = labelModel.get('bleedMargin');
+      var labelLineModel = itemModel.getModel('labelLine');
+      var labelLineLen = labelLineModel.get('length');
+      labelLineLen = parsePercent$1(labelLineLen, viewWidth);
+      var labelLineLen2 = labelLineModel.get('length2');
+      labelLineLen2 = parsePercent$1(labelLineLen2, viewWidth);
+
+      if (Math.abs(sectorShape.endAngle - sectorShape.startAngle) < minShowLabelRadian) {
+        each(label.states, setNotShow);
+        each(labelLine.states, setNotShow);
+        label.ignore = labelLine.ignore = true;
+        return;
+      }
+
+      if (!isLabelShown(label)) {
+        return;
+      }
+
+      var midAngle = (sectorShape.startAngle + sectorShape.endAngle) / 2;
+      var nx = Math.cos(midAngle);
+      var ny = Math.sin(midAngle);
+      var textX;
+      var textY;
+      var linePoints;
+      var textAlign;
+      cx = sectorShape.cx;
+      cy = sectorShape.cy;
+      var isLabelInside = labelPosition === 'inside' || labelPosition === 'inner';
+
+      if (labelPosition === 'center') {
+        textX = sectorShape.cx;
+        textY = sectorShape.cy;
+        textAlign = 'center';
+      } else {
+        var x1 = (isLabelInside ? (sectorShape.r + sectorShape.r0) / 2 * nx : sectorShape.r * nx) + cx;
+        var y1 = (isLabelInside ? (sectorShape.r + sectorShape.r0) / 2 * ny : sectorShape.r * ny) + cy;
+        textX = x1 + nx * 3;
+        textY = y1 + ny * 3;
+
+        if (!isLabelInside) {
+          // For roseType
+          var x2 = x1 + nx * (labelLineLen + r - sectorShape.r);
+          var y2 = y1 + ny * (labelLineLen + r - sectorShape.r);
+          var x3 = x2 + (nx < 0 ? -1 : 1) * labelLineLen2;
+          var y3 = y2;
+
+          if (labelAlignTo === 'edge') {
+            // Adjust textX because text align of edge is opposite
+            textX = nx < 0 ? viewLeft + edgeDistance : viewLeft + viewWidth - edgeDistance;
+          } else {
+            textX = x3 + (nx < 0 ? -labelDistance : labelDistance);
+          }
+
+          textY = y3;
+          linePoints = [[x1, y1], [x2, y2], [x3, y3]];
+        }
+
+        textAlign = isLabelInside ? 'center' : labelAlignTo === 'edge' ? nx > 0 ? 'right' : 'left' : nx > 0 ? 'left' : 'right';
+      }
+
+      var PI = Math.PI;
+      var labelRotate = 0;
+      var rotate = labelModel.get('rotate');
+
+      if (isNumber(rotate)) {
+        labelRotate = rotate * (PI / 180);
+      } else if (labelPosition === 'center') {
+        labelRotate = 0;
+      } else if (rotate === 'radial' || rotate === true) {
+        var radialAngle = nx < 0 ? -midAngle + PI : -midAngle;
+        labelRotate = radialAngle;
+      } else if (rotate === 'tangential' && labelPosition !== 'outside' && labelPosition !== 'outer') {
+        var rad = Math.atan2(nx, ny);
+
+        if (rad < 0) {
+          rad = PI * 2 + rad;
+        }
+
+        var isDown = ny > 0;
+
+        if (isDown) {
+          rad = PI + rad;
+        }
+
+        labelRotate = rad - PI;
+      }
+
+      hasLabelRotate = !!labelRotate;
+      label.x = textX;
+      label.y = textY;
+      label.rotation = labelRotate;
+      label.setStyle({
+        verticalAlign: 'middle'
+      }); // Not sectorShape the inside label
+
+      if (!isLabelInside) {
+        var textRect = label.getBoundingRect().clone();
+        textRect.applyTransform(label.getComputedTransform()); // Text has a default 1px stroke. Exclude this.
+
+        var margin = (label.style.margin || 0) + 2.1;
+        textRect.y -= margin / 2;
+        textRect.height += margin;
+        labelLayoutList.push({
+          label: label,
+          labelLine: labelLine,
+          position: labelPosition,
+          len: labelLineLen,
+          len2: labelLineLen2,
+          minTurnAngle: labelLineModel.get('minTurnAngle'),
+          maxSurfaceAngle: labelLineModel.get('maxSurfaceAngle'),
+          surfaceNormal: new Point(nx, ny),
+          linePoints: linePoints,
+          textAlign: textAlign,
+          labelDistance: labelDistance,
+          labelAlignTo: labelAlignTo,
+          edgeDistance: edgeDistance,
+          bleedMargin: bleedMargin,
+          rect: textRect,
+          unconstrainedWidth: textRect.width,
+          labelStyleWidth: label.style.width
+        });
+      } else {
+        label.setStyle({
+          align: textAlign
+        });
+        var selectState = label.states.select;
+
+        if (selectState) {
+          selectState.x += label.x;
+          selectState.y += label.y;
+        }
+      }
+
+      sector.setTextConfig({
+        inside: isLabelInside
+      });
+    });
+
+    if (!hasLabelRotate && seriesModel.get('avoidLabelOverlap')) {
+      avoidOverlap(labelLayoutList, cx, cy, r, viewWidth, viewHeight, viewLeft, viewTop);
+    }
+
+    for (var i = 0; i < labelLayoutList.length; i++) {
+      var layout = labelLayoutList[i];
+      var label = layout.label;
+      var labelLine = layout.labelLine;
+      var notShowLabel = isNaN(label.x) || isNaN(label.y);
+
+      if (label) {
+        label.setStyle({
+          align: layout.textAlign
+        });
+
+        if (notShowLabel) {
+          each(label.states, setNotShow);
+          label.ignore = true;
+        }
+
+        var selectState = label.states.select;
+
+        if (selectState) {
+          selectState.x += label.x;
+          selectState.y += label.y;
+        }
+      }
+
+      if (labelLine) {
+        var linePoints = layout.linePoints;
+
+        if (notShowLabel || !linePoints) {
+          each(labelLine.states, setNotShow);
+          labelLine.ignore = true;
+        } else {
+          limitTurnAngle(linePoints, layout.minTurnAngle);
+          limitSurfaceAngle(linePoints, layout.surfaceNormal, layout.maxSurfaceAngle);
+          labelLine.setShape({
+            points: linePoints
+          }); // Set the anchor to the midpoint of sector
+
+          label.__hostTarget.textGuideLineConfig = {
+            anchor: new Point(linePoints[0][0], linePoints[0][1])
+          };
+        }
+      }
+    }
+  }
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+
+  function getSectorCornerRadius(model, shape, zeroIfNull) {
+    var cornerRadius = model.get('borderRadius');
+
+    if (cornerRadius == null) {
+      return zeroIfNull ? {
+        cornerRadius: 0
+      } : null;
+    }
+
+    if (!isArray(cornerRadius)) {
+      cornerRadius = [cornerRadius, cornerRadius, cornerRadius, cornerRadius];
+    }
+
+    var dr = Math.abs(shape.r || 0 - shape.r0 || 0);
+    return {
+      cornerRadius: map(cornerRadius, function (cr) {
+        return parsePercent(cr, dr);
+      })
+    };
+  }
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * Piece of pie including Sector, Label, LabelLine
+   */
+
+
+  var PiePiece =
+  /** @class */
+  function (_super) {
+    __extends(PiePiece, _super);
+
+    function PiePiece(data, idx, startAngle) {
+      var _this = _super.call(this) || this;
+
+      _this.z2 = 2;
+      var text = new ZRText();
+
+      _this.setTextContent(text);
+
+      _this.updateData(data, idx, startAngle, true);
+
+      return _this;
+    }
+
+    PiePiece.prototype.updateData = function (data, idx, startAngle, firstCreate) {
+      var sector = this;
+      var seriesModel = data.hostModel;
+      var itemModel = data.getItemModel(idx);
+      var emphasisModel = itemModel.getModel('emphasis');
+      var layout = data.getItemLayout(idx); // cornerRadius & innerCornerRadius doesn't exist in the item layout. Use `0` if null value is specified.
+      // see `setItemLayout` in `pieLayout.ts`.
+
+      var sectorShape = extend(getSectorCornerRadius(itemModel.getModel('itemStyle'), layout, true), layout); // Ignore NaN data.
+
+      if (isNaN(sectorShape.startAngle)) {
+        // Use NaN shape to avoid drawing shape.
+        sector.setShape(sectorShape);
+        return;
+      }
+
+      if (firstCreate) {
+        sector.setShape(sectorShape);
+        var animationType = seriesModel.getShallow('animationType');
+
+        if (seriesModel.ecModel.ssr) {
+          // Use scale animation in SSR mode(opacity?)
+          // Because CSS SVG animation doesn't support very customized shape animation.
+          initProps(sector, {
+            scaleX: 0,
+            scaleY: 0
+          }, seriesModel, {
+            dataIndex: idx,
+            isFrom: true
+          });
+          sector.originX = sectorShape.cx;
+          sector.originY = sectorShape.cy;
+        } else if (animationType === 'scale') {
+          sector.shape.r = layout.r0;
+          initProps(sector, {
+            shape: {
+              r: layout.r
+            }
+          }, seriesModel, idx);
+        } // Expansion
+        else {
+            if (startAngle != null) {
+              sector.setShape({
+                startAngle: startAngle,
+                endAngle: startAngle
+              });
+              initProps(sector, {
+                shape: {
+                  startAngle: layout.startAngle,
+                  endAngle: layout.endAngle
+                }
+              }, seriesModel, idx);
+            } else {
+              sector.shape.endAngle = layout.startAngle;
+              updateProps(sector, {
+                shape: {
+                  endAngle: layout.endAngle
+                }
+              }, seriesModel, idx);
+            }
+          }
+      } else {
+        saveOldStyle(sector); // Transition animation from the old shape
+
+        updateProps(sector, {
+          shape: sectorShape
+        }, seriesModel, idx);
+      }
+
+      sector.useStyle(data.getItemVisual(idx, 'style'));
+      setStatesStylesFromModel(sector, itemModel);
+      var midAngle = (layout.startAngle + layout.endAngle) / 2;
+      var offset = seriesModel.get('selectedOffset');
+      var dx = Math.cos(midAngle) * offset;
+      var dy = Math.sin(midAngle) * offset;
+      var cursorStyle = itemModel.getShallow('cursor');
+      cursorStyle && sector.attr('cursor', cursorStyle);
+
+      this._updateLabel(seriesModel, data, idx);
+
+      sector.ensureState('emphasis').shape = extend({
+        r: layout.r + (emphasisModel.get('scale') ? emphasisModel.get('scaleSize') || 0 : 0)
+      }, getSectorCornerRadius(emphasisModel.getModel('itemStyle'), layout));
+      extend(sector.ensureState('select'), {
+        x: dx,
+        y: dy,
+        shape: getSectorCornerRadius(itemModel.getModel(['select', 'itemStyle']), layout)
+      });
+      extend(sector.ensureState('blur'), {
+        shape: getSectorCornerRadius(itemModel.getModel(['blur', 'itemStyle']), layout)
+      });
+      var labelLine = sector.getTextGuideLine();
+      var labelText = sector.getTextContent();
+      labelLine && extend(labelLine.ensureState('select'), {
+        x: dx,
+        y: dy
+      }); // TODO: needs dx, dy in zrender?
+
+      extend(labelText.ensureState('select'), {
+        x: dx,
+        y: dy
+      });
+      toggleHoverEmphasis(this, emphasisModel.get('focus'), emphasisModel.get('blurScope'), emphasisModel.get('disabled'));
+    };
+
+    PiePiece.prototype._updateLabel = function (seriesModel, data, idx) {
+      var sector = this;
+      var itemModel = data.getItemModel(idx);
+      var labelLineModel = itemModel.getModel('labelLine');
+      var style = data.getItemVisual(idx, 'style');
+      var visualColor = style && style.fill;
+      var visualOpacity = style && style.opacity;
+      setLabelStyle(sector, getLabelStatesModels(itemModel), {
+        labelFetcher: data.hostModel,
+        labelDataIndex: idx,
+        inheritColor: visualColor,
+        defaultOpacity: visualOpacity,
+        defaultText: seriesModel.getFormattedLabel(idx, 'normal') || data.getName(idx)
+      });
+      var labelText = sector.getTextContent(); // Set textConfig on sector.
+
+      sector.setTextConfig({
+        // reset position, rotation
+        position: null,
+        rotation: null
+      }); // Make sure update style on labelText after setLabelStyle.
+      // Because setLabelStyle will replace a new style on it.
+
+      labelText.attr({
+        z2: 10
+      });
+      var labelPosition = seriesModel.get(['label', 'position']);
+
+      if (labelPosition !== 'outside' && labelPosition !== 'outer') {
+        sector.removeTextGuideLine();
+      } else {
+        var polyline = this.getTextGuideLine();
+
+        if (!polyline) {
+          polyline = new Polyline();
+          this.setTextGuideLine(polyline);
+        } // Default use item visual color
+
+
+        setLabelLineStyle(this, getLabelLineStatesModels(itemModel), {
+          stroke: visualColor,
+          opacity: retrieve3(labelLineModel.get(['lineStyle', 'opacity']), visualOpacity, 1)
+        });
+      }
+    };
+
+    return PiePiece;
+  }(Sector); // Pie view
+
+
+  var PieView =
+  /** @class */
+  function (_super) {
+    __extends(PieView, _super);
+
+    function PieView() {
+      var _this = _super !== null && _super.apply(this, arguments) || this;
+
+      _this.ignoreLabelLineUpdate = true;
+      return _this;
+    }
+
+    PieView.prototype.render = function (seriesModel, ecModel, api, payload) {
+      var data = seriesModel.getData();
+      var oldData = this._data;
+      var group = this.group;
+      var startAngle; // First render
+
+      if (!oldData && data.count() > 0) {
+        var shape = data.getItemLayout(0);
+
+        for (var s = 1; isNaN(shape && shape.startAngle) && s < data.count(); ++s) {
+          shape = data.getItemLayout(s);
+        }
+
+        if (shape) {
+          startAngle = shape.startAngle;
+        }
+      } // remove empty-circle if it exists
+
+
+      if (this._emptyCircleSector) {
+        group.remove(this._emptyCircleSector);
+      } // when all data are filtered, show lightgray empty circle
+
+
+      if (data.count() === 0 && seriesModel.get('showEmptyCircle')) {
+        var sector = new Sector({
+          shape: getBasicPieLayout(seriesModel, api)
+        });
+        sector.useStyle(seriesModel.getModel('emptyCircleStyle').getItemStyle());
+        this._emptyCircleSector = sector;
+        group.add(sector);
+      }
+
+      data.diff(oldData).add(function (idx) {
+        var piePiece = new PiePiece(data, idx, startAngle);
+        data.setItemGraphicEl(idx, piePiece);
+        group.add(piePiece);
+      }).update(function (newIdx, oldIdx) {
+        var piePiece = oldData.getItemGraphicEl(oldIdx);
+        piePiece.updateData(data, newIdx, startAngle);
+        piePiece.off('click');
+        group.add(piePiece);
+        data.setItemGraphicEl(newIdx, piePiece);
+      }).remove(function (idx) {
+        var piePiece = oldData.getItemGraphicEl(idx);
+        removeElementWithFadeOut(piePiece, seriesModel, idx);
+      }).execute();
+      pieLabelLayout(seriesModel); // Always use initial animation.
+
+      if (seriesModel.get('animationTypeUpdate') !== 'expansion') {
+        this._data = data;
+      }
+    };
+
+    PieView.prototype.dispose = function () {};
+
+    PieView.prototype.containPoint = function (point, seriesModel) {
+      var data = seriesModel.getData();
+      var itemLayout = data.getItemLayout(0);
+
+      if (itemLayout) {
+        var dx = point[0] - itemLayout.cx;
+        var dy = point[1] - itemLayout.cy;
+        var radius = Math.sqrt(dx * dx + dy * dy);
+        return radius <= itemLayout.r && radius >= itemLayout.r0;
+      }
+    };
+
+    PieView.type = 'pie';
+    return PieView;
+  }(ChartView);
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * [Usage]:
+   * (1)
+   * createListSimply(seriesModel, ['value']);
+   * (2)
+   * createListSimply(seriesModel, {
+   *     coordDimensions: ['value'],
+   *     dimensionsCount: 5
+   * });
+   */
+
+
+  function createSeriesDataSimply(seriesModel, opt, nameList) {
+    opt = isArray(opt) && {
+      coordDimensions: opt
+    } || extend({
+      encodeDefine: seriesModel.getEncode()
+    }, opt);
+    var source = seriesModel.getSource();
+    var dimensions = prepareSeriesDataSchema(source, opt).dimensions;
+    var list = new SeriesData(dimensions, seriesModel);
+    list.initData(source, nameList);
+    return list;
+  }
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * LegendVisualProvider is an bridge that pick encoded color from data and
+   * provide to the legend component.
+   */
+
+
+  var LegendVisualProvider =
+  /** @class */
+  function () {
+    function LegendVisualProvider( // Function to get data after filtered. It stores all the encoding info
+    getDataWithEncodedVisual, // Function to get raw data before filtered.
+    getRawData) {
+      this._getDataWithEncodedVisual = getDataWithEncodedVisual;
+      this._getRawData = getRawData;
+    }
+
+    LegendVisualProvider.prototype.getAllNames = function () {
+      var rawData = this._getRawData(); // We find the name from the raw data. In case it's filtered by the legend component.
+      // Normally, the name can be found in rawData, but can't be found in filtered data will display as gray.
+
+
+      return rawData.mapArray(rawData.getName);
+    };
+
+    LegendVisualProvider.prototype.containName = function (name) {
+      var rawData = this._getRawData();
+
+      return rawData.indexOfName(name) >= 0;
+    };
+
+    LegendVisualProvider.prototype.indexOfName = function (name) {
+      // Only get data when necessary.
+      // Because LegendVisualProvider constructor may be new in the stage that data is not prepared yet.
+      // Invoking Series#getData immediately will throw an error.
+      var dataWithEncodedVisual = this._getDataWithEncodedVisual();
+
+      return dataWithEncodedVisual.indexOfName(name);
+    };
+
+    LegendVisualProvider.prototype.getItemVisual = function (dataIndex, key) {
+      // Get encoded visual properties from final filtered data.
+      var dataWithEncodedVisual = this._getDataWithEncodedVisual();
+
+      return dataWithEncodedVisual.getItemVisual(dataIndex, key);
+    };
+
+    return LegendVisualProvider;
+  }();
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+
+  var PieSeriesModel =
+  /** @class */
+  function (_super) {
+    __extends(PieSeriesModel, _super);
+
+    function PieSeriesModel() {
+      return _super !== null && _super.apply(this, arguments) || this;
+    }
+    /**
+     * @overwrite
+     */
+
+
+    PieSeriesModel.prototype.init = function (option) {
+      _super.prototype.init.apply(this, arguments); // Enable legend selection for each data item
+      // Use a function instead of direct access because data reference may changed
+
+
+      this.legendVisualProvider = new LegendVisualProvider(bind(this.getData, this), bind(this.getRawData, this));
+
+      this._defaultLabelLine(option);
+    };
+    /**
+     * @overwrite
+     */
+
+
+    PieSeriesModel.prototype.mergeOption = function () {
+      _super.prototype.mergeOption.apply(this, arguments);
+    };
+    /**
+     * @overwrite
+     */
+
+
+    PieSeriesModel.prototype.getInitialData = function () {
+      var data = createSeriesDataSimply(this, {
+        coordDimensions: ['value'],
+        encodeDefaulter: curry(makeSeriesEncodeForNameBased, this)
+      });
+      var valueList = [];
+      data.each(data.mapDimension('value'), function (value) {
+        valueList.push(value);
+      });
+      this.seats = getPercentSeats(valueList, data.hostModel.get('percentPrecision'));
+      return data;
+    };
+    /**
+     * @overwrite
+     */
+
+
+    PieSeriesModel.prototype.getDataParams = function (dataIndex) {
+      var params = _super.prototype.getDataParams.call(this, dataIndex);
+
+      params.percent = this.seats[dataIndex];
+      params.$vars.push('percent');
+      return params;
+    };
+
+    PieSeriesModel.prototype._defaultLabelLine = function (option) {
+      // Extend labelLine emphasis
+      defaultEmphasis(option, 'labelLine', ['show']);
+      var labelLineNormalOpt = option.labelLine;
+      var labelLineEmphasisOpt = option.emphasis.labelLine; // Not show label line if `label.normal.show = false`
+
+      labelLineNormalOpt.show = labelLineNormalOpt.show && option.label.show;
+      labelLineEmphasisOpt.show = labelLineEmphasisOpt.show && option.emphasis.label.show;
+    };
+
+    PieSeriesModel.type = 'series.pie';
+    PieSeriesModel.defaultOption = {
+      // zlevel: 0,
+      z: 2,
+      legendHoverLink: true,
+      colorBy: 'data',
+      // 默认全局居中
+      center: ['50%', '50%'],
+      radius: [0, '75%'],
+      // 默认顺时针
+      clockwise: true,
+      startAngle: 90,
+      // 最小角度改为0
+      minAngle: 0,
+      // If the angle of a sector less than `minShowLabelAngle`,
+      // the label will not be displayed.
+      minShowLabelAngle: 0,
+      // 选中时扇区偏移量
+      selectedOffset: 10,
+      // 选择模式，默认关闭，可选single，multiple
+      // selectedMode: false,
+      // 南丁格尔玫瑰图模式，'radius'（半径） | 'area'（面积）
+      // roseType: null,
+      percentPrecision: 2,
+      // If still show when all data zero.
+      stillShowZeroSum: true,
+      // cursor: null,
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      width: null,
+      height: null,
+      label: {
+        // color: 'inherit',
+        // If rotate around circle
+        rotate: 0,
+        show: true,
+        overflow: 'truncate',
+        // 'outer', 'inside', 'center'
+        position: 'outer',
+        // 'none', 'labelLine', 'edge'. Works only when position is 'outer'
+        alignTo: 'none',
+        // Closest distance between label and chart edge.
+        // Works only position is 'outer' and alignTo is 'edge'.
+        edgeDistance: '25%',
+        // Works only position is 'outer' and alignTo is not 'edge'.
+        bleedMargin: 10,
+        // Distance between text and label line.
+        distanceToLabelLine: 5 // formatter: 标签文本格式器，同Tooltip.formatter，不支持异步回调
+        // 默认使用全局文本样式，详见TEXTSTYLE
+        // distance: 当position为inner时有效，为label位置到圆心的距离与圆半径(环状图为内外半径和)的比例系数
+
+      },
+      // Enabled when label.normal.position is 'outer'
+      labelLine: {
+        show: true,
+        // 引导线两段中的第一段长度
+        length: 15,
+        // 引导线两段中的第二段长度
+        length2: 15,
+        smooth: false,
+        minTurnAngle: 90,
+        maxSurfaceAngle: 90,
+        lineStyle: {
+          // color: 各异,
+          width: 1,
+          type: 'solid'
+        }
+      },
+      itemStyle: {
+        borderWidth: 1,
+        borderJoin: 'round'
+      },
+      showEmptyCircle: true,
+      emptyCircleStyle: {
+        color: 'lightgray',
+        opacity: 1
+      },
+      labelLayout: {
+        // Hide the overlapped label.
+        hideOverlap: true
+      },
+      emphasis: {
+        scale: true,
+        scaleSize: 5
+      },
+      // If use strategy to avoid label overlapping
+      avoidLabelOverlap: true,
+      // Animation type. Valid values: expansion, scale
+      animationType: 'expansion',
+      animationDuration: 1000,
+      // Animation type when update. Valid values: transition, expansion
+      animationTypeUpdate: 'transition',
+      animationEasingUpdate: 'cubicInOut',
+      animationDurationUpdate: 500,
+      animationEasing: 'cubicInOut'
+    };
+    return PieSeriesModel;
+  }(SeriesModel);
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+
+  function negativeDataFilter(seriesType) {
+    return {
+      seriesType: seriesType,
+      reset: function (seriesModel, ecModel) {
+        var data = seriesModel.getData();
+        data.filterSelf(function (idx) {
+          // handle negative value condition
+          var valueDim = data.mapDimension('value');
+          var curValue = data.get(valueDim, idx);
+
+          if (isNumber(curValue) && !isNaN(curValue) && curValue < 0) {
+            return false;
+          }
+
+          return true;
+        });
+      }
+    };
+  }
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+
+  function install$4(registers) {
+    registers.registerChartView(PieView);
+    registers.registerSeriesModel(PieSeriesModel);
+    createLegacyDataSelectAction('pie', registers.registerAction);
+    registers.registerLayout(curry(pieLayout, 'pie'));
+    registers.registerProcessor(dataFilter('pie'));
+    registers.registerProcessor(negativeDataFilter('pie'));
+  }
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+  /**
+   * AUTO-GENERATED FILE. DO NOT MODIFY.
+   */
+
+  /*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+  * regarding copyright ownership.  The ASF licenses this file
+  * to you under the Apache License, Version 2.0 (the
+  * "License"); you may not use this file except in compliance
+  * with the License.  You may obtain a copy of the License at
+  *
+  *   http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing,
+  * software distributed under the License is distributed on an
+  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+
+
+  use(install$4);
   /*
   * Licensed to the Apache Software Foundation (ASF) under one
   * or more contributor license agreements.  See the NOTICE file
@@ -51908,6 +53849,7 @@
       var matrix = transformGroup.transform;
       var pt1 = [extent[0], 0];
       var pt2 = [extent[1], 0];
+      var inverse = pt1[0] > pt2[0];
 
       if (matrix) {
         applyTransform(pt1, pt1, matrix);
@@ -51918,8 +53860,6 @@
         lineCap: 'round'
       }, axisModel.getModel(['axisLine', 'lineStyle']).getLineStyle());
       var line = new Line({
-        // Id for animation
-        subPixelOptimize: true,
         shape: {
           x1: pt1[0],
           y1: pt1[1],
@@ -51931,6 +53871,7 @@
         silent: true,
         z2: 1
       });
+      subPixelOptimizeLine$1(line.shape, line.style.lineWidth);
       line.anid = 'line';
       group.add(line);
       var arrows = axisModel.get(['axisLine', 'symbol']);
@@ -51964,10 +53905,11 @@
             var symbol = createSymbol(arrows[index], -symbolWidth_1 / 2, -symbolHeight_1 / 2, symbolWidth_1, symbolHeight_1, lineStyle.stroke, true); // Calculate arrow position with offset
 
             var r = point.r + point.offset;
+            var pt = inverse ? pt2 : pt1;
             symbol.attr({
               rotation: point.rotate,
-              x: pt1[0] + r * Math.cos(opt.rotation),
-              y: pt1[1] - r * Math.sin(opt.rotation),
+              x: pt[0] + r * Math.cos(opt.rotation),
+              y: pt[1] - r * Math.sin(opt.rotation),
               silent: true,
               z2: 11
             });
@@ -52203,7 +54145,6 @@
 
 
       var tickEl = new Line({
-        subPixelOptimize: true,
         shape: {
           x1: pt1[0],
           y1: pt1[1],
@@ -52215,6 +54156,7 @@
         autoBatch: true,
         silent: true
       });
+      subPixelOptimizeLine$1(tickEl.shape, tickEl.style.lineWidth);
       tickEl.anid = anidPrefix + '_' + ticksCoords[i].tickValue;
       tickEls.push(tickEl);
     }
@@ -53107,9 +55049,8 @@
 
         var colorIndex = lineCount++ % lineColors.length;
         var tickValue = ticksCoords[i].tickValue;
-        axisGroup.add(new Line({
+        var line = new Line({
           anid: tickValue != null ? 'line_' + ticksCoords[i].tickValue : null,
-          subPixelOptimize: true,
           autoBatch: true,
           shape: {
             x1: p1[0],
@@ -53121,7 +55062,9 @@
             stroke: lineColors[colorIndex]
           }, lineStyle),
           silent: true
-        }));
+        });
+        subPixelOptimizeLine$1(line.shape, lineStyle.lineWidth);
+        axisGroup.add(line);
       }
     },
     minorSplitLine: function (axisView, axisGroup, axisModel, gridModel) {
@@ -53156,9 +55099,8 @@
             p2[1] = tickCoord;
           }
 
-          axisGroup.add(new Line({
+          var line = new Line({
             anid: 'minor_line_' + minorTicksCoords[i][k].tickValue,
-            subPixelOptimize: true,
             autoBatch: true,
             shape: {
               x1: p1[0],
@@ -53168,7 +55110,9 @@
             },
             style: lineStyle,
             silent: true
-          }));
+          });
+          subPixelOptimizeLine$1(line.shape, lineStyle.lineWidth);
+          axisGroup.add(line);
         }
       }
     },
@@ -53288,7 +55232,7 @@
     offset: 0
   };
 
-  function install$4(registers) {
+  function install$5(registers) {
     registers.registerComponentView(GridView);
     registers.registerComponentModel(GridModel);
     registers.registerCoordinateSystem('cartesian2d', Grid);
@@ -53346,7 +55290,7 @@
   */
 
 
-  use(install$4);
+  use(install$5);
   /*
   * Licensed to the Apache Software Foundation (ASF) under one
   * or more contributor license agreements.  See the NOTICE file
@@ -53581,7 +55525,7 @@
     return TitleView;
   }(ComponentView);
 
-  function install$5(registers) {
+  function install$6(registers) {
     registers.registerComponentModel(TitleModel);
     registers.registerComponentView(TitleView);
   }
@@ -53628,7 +55572,7 @@
   */
 
 
-  use(install$5);
+  use(install$6);
   /*
   * Licensed to the Apache Software Foundation (ASF) under one
   * or more contributor license agreements.  See the NOTICE file
@@ -54821,7 +56765,7 @@
   */
 
 
-  function install$7(registers) {
+  function install$8(registers) {
     registers.registerComponentModel(LegendModel);
     registers.registerComponentView(LegendView);
     registers.registerProcessor(registers.PRIORITY.PROCESSOR.SERIES_FILTER, legendFilter);
@@ -55493,8 +57437,8 @@
   */
 
 
-  function install$6(registers) {
-    use(install$7);
+  function install$7(registers) {
+    use(install$8);
     registers.registerComponentModel(ScrollableLegendModel);
     registers.registerComponentView(ScrollableLegendView);
     installScrollableLegendAction(registers);
@@ -55546,7 +57490,7 @@
    */
 
 
-  use(install$6);
+  use(install$7);
   /*
   * Licensed to the Apache Software Foundation (ASF) under one
   * or more contributor license agreements.  See the NOTICE file
@@ -57254,7 +59198,7 @@
   */
 
 
-  function install$9(registers) {
+  function install$10(registers) {
     // CartesianAxisPointer is not supposed to be required here. But consider
     // echarts.simple.js and online build tooltip, which only require gridSimple,
     // CartesianAxisPointer should be able to required somewhere.
@@ -59145,8 +61089,8 @@
   */
 
 
-  function install$8(registers) {
-    use(install$9);
+  function install$9(registers) {
+    use(install$10);
     registers.registerComponentModel(TooltipModel);
     registers.registerComponentView(TooltipView);
     /**
@@ -59212,7 +61156,7 @@
   */
 
 
-  use(install$8);
+  use(install$9);
   exports.version = version;
   exports.dependencies = dependencies;
   exports.PRIORITY = PRIORITY;

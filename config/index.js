@@ -48,12 +48,12 @@ const config = {
     }
   },
   h5: {
-    esnextModules: ["ossaui"],
+    esnextModules: ["ossaui","taro-react-table"],
     publicPath: "/",
     staticDirectory: "static",
     postcss: {
       autoprefixer: {
-        enable: true,
+        enable: false,
         config: {}
       },
       cssModules: {
