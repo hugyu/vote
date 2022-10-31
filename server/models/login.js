@@ -25,20 +25,33 @@ router.post("/login", async (req, res) => {
       //有对应的手机号 走登录流程
       const sqlStr2 = `select nickName,password from user where userPhone =${userPhone}`;
       const userInfoRes = await sqlQuery(sqlStr2);
-      if (userInfoRes.length && userInfoRes[0].password === password) {
+      if (userInfoRes.length && userInfoRes[0].password === password &&userInfoRes[0].nickName === "admin") {
         //登录成功
-        if (nickName !== userPhone[0]["nickName"]) {
-          //如果nickName不一致 就更新nickName
-          const updateNickNameSql = `update user set nickName='${nickName}' where userPhone = ${userPhone}`;
-          await sqlQuery(updateNickNameSql);
-        }
+        // if (nickName !== userPhone[0]["nickName"]) {
+        //   //如果nickName不一致 就更新nickName
+        //   const updateNickNameSql = `update user set nickName='${nickName}' where userPhone = ${userPhone}`;
+        //   await sqlQuery(updateNickNameSql);
+        // }
         res.send({
           code: 1,
           message: "登录成功",
           result: {
             nickName,
             userPhone
-          }
+            },
+          admin:true
+        });
+      } else if (
+        userInfoRes.length &&
+        userInfoRes[0].password === password 
+      ) {
+        res.send({
+          code: 1,
+          message: "登录成功",
+          result: {
+            nickName,
+            userPhone
+          },
         });
       } else {
         //登录失败

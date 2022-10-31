@@ -53,7 +53,9 @@ function Login() {
             setStorageSyncWithTime("userInfo", { userPhone, nickName }, 7200);
             // 初始化user
             userStore.initUser();
-            Taro.navigateBack();
+            if (res.admin) {
+              Taro.navigateTo({ url: "/pages/admin/admin" });
+            } else Taro.navigateBack();
           })
           .catch(err => {
             console.log(err);
@@ -104,7 +106,6 @@ function Login() {
           placeholder="请输入手机号"
           placeholderClass="placeholer-class"
           onInput={e => handleInput(e, "userPhone")}
-          
         ></Input>
 
         <Input
