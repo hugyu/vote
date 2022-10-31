@@ -9,7 +9,6 @@ import {
 } from "ossaui";
 import { useState } from "react";
 import banner from "../../assets/banner.png";
-
 import "./index.scss";
 import Area2 from "../components/Area2/area2";
 import Area1 from "../components/Area1/area1";

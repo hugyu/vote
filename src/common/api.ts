@@ -37,3 +37,18 @@ export const yoghurtVote=(data?:any)=>request({
     url: `${API_PRE}/yoghurt/vote`,
     data:data
 })
+// 登录
+export const loginReq = (data) => request({
+    url: `${API_PRE}/login`,
+    data: data,
+    method: "POST",
+    header:{"Content-Type": "application/x-www-form-urlencoded"}
+})
+// 注册
+export const registerReq = (data) => request({
+    url: `${API_PRE}/register`,
+    data: data,
+    method: "POST",
+    header:{"Content-Type": "application/x-www-form-urlencoded"}
+    
+})

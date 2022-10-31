@@ -1,18 +1,15 @@
-import { Component, PropsWithChildren } from 'react'
+import { useEffect } from 'react'
+import { useStore } from '../src/store'
+import { observer } from 'mobx-react-lite'
 import './app.scss'
-
-class App extends Component<PropsWithChildren> {
-
-  componentDidMount () {}
-
-  componentDidShow () {}
-
-  componentDidHide () {}
-
-  render () {
-    // this.props.children 是将要会渲染的页面
-    return this.props.children
-  }
+function App(props) {
+  const {userStore}=useStore()
+  useEffect(() => {
+    userStore.initUser()
+  },[])
+  return (
+    props.children
+  )
 }
 
-export default App
+export default observer(App);
