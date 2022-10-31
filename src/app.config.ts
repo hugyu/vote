@@ -4,14 +4,20 @@ export default defineAppConfig({
     'pages/login/login',
     'pages/admin/admin'
   ],
+  subPackages: [
+    {
+      "root": "package",
+      "pages": [
+        'page1/admin/admin',
+      ],
+      "independent": true
+    },
+  ],
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',
     navigationBarTitleText: 'WeChat',
     navigationBarTextStyle: 'black'
   },
-  usingComponents: {
-    // 'custom-wrapper': '/custom-wrapper',
-    // 'tmpl_10_12':'/tmpl_10_12',
-    }
+  
 })

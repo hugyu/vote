@@ -2,10 +2,10 @@ import { View } from "@tarojs/components";
 import { OsList, OsPicker } from "ossaui";
 import { useEffect, useState } from "react";
 import Echarts, { EChartOption } from "taro-react-echarts";
-import echarts from "../../assets/echarts";
+import echarts from "../../../assets/echarts";
 import Table, { Columns } from "taro-react-table";
 import "./admin.scss";
-import { mineralReq, pureReq, drinksReq, yoghurtReq } from "../../common/api";
+import { mineralReq, pureReq, drinksReq, yoghurtReq } from "../../../common/api";
 const INFO = ["矿泉水", "牛奶", "饮料", "酸奶"];
 const method = { 0: mineralReq, 1: pureReq, 2: drinksReq, 3: yoghurtReq };
 
