@@ -15,7 +15,9 @@ function Area2() {
           </View>
           <View className="rule">
             <Text className="label">规则</Text>
-            <Text className="rule-info" style={{textAlign:"start"}}>一人每个组别有两票 不能投给同一饮品</Text>
+            <Text className="rule-info" style={{ textAlign: "start" }}>
+              一人每个组别有两票 不能投给同一饮品
+            </Text>
           </View>
         </View>
       </View>

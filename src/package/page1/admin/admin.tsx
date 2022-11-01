@@ -97,7 +97,7 @@ function Admin() {
     setColumns(newColumns);
   };
   const handleDataSource = listData => {
-    const object = { ticket_count: "ticket_count" };
+    const object = { ticket_count: "票数" };
     listData.map((data, _index) => {
       const label = data["label"];
       const ticket_count = data["ticket_count"];

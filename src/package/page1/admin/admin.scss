@@ -1,44 +1,40 @@
-@import 'taro-react-table/dist/index.css';
-@import '~ossaui/dist/style/index.scss' ;
+@import "taro-react-table/dist/index.css";
+@import "~ossaui/dist/style/index.scss";
 .container {
-    background: #89dbff;
-    height: 100vh;
-    .zhanwei {
-        margin-bottom: 20px;
-        height: 10px;
+  background: #89dbff;
+  height: 100vh;
+  .zhanwei {
+    margin-bottom: 20px;
+    height: 10px;
+  }
+  .picker-container {
+    // position: absolute;
+    height: 100px;
+    margin: 20px 15px;
+    border-radius: 20px;
+    .ossa-list {
+      border-radius: 20px;
+      border: 0;
+      font-size: 35px;
+      background-color: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(4px);
+      .ossa-list__title {
+        font-size: 35px;
       }
-    .picker-container {
-      // position: absolute;
-        height: 100px;
-        margin: 20px 15px;
-        border-radius: 20px;
-        .ossa-list {
-          border-radius: 20px;
-          border: 0;
-          font-size: 35px;
-          background-color: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(4px);
-          .ossa-list__title {
-            font-size: 35px;
-          }
-        }
-        .ossa-picker-popup__container {
-            z-index: 100000;
-            height: 410px;
-        }
-      }
-      .table-container {
-        margin: 0 15px;
-        .taro-table-head {
-            min-width: 300px!important;
-          } 
-        //   .taro-table-content-wrapper {
-        //     border-radius: 25px;
-        //   }
-      }
-      .echarts-container {
-        z-index: 1;
-        margin: 0 15px;
-      }
-      
+    }
+    .ossa-picker-popup__container {
+      z-index: 100000;
+      height: 600px;
+    }
+  }
+  .table-container {
+    margin: 0 15px;
+    .taro-table-head {
+      min-width: 300px !important;
+    }
+  }
+  .echarts-container {
+    z-index: 1;
+    margin: 0 15px;
+  }
 }
