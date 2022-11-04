@@ -39,9 +39,12 @@ function Login() {
       return showToast({ title: "请输入完整信息" });
     }
     const reg = /^1[3-9]\d{9}$/;
+    console.log(reg.test(userPhone),'reg');
+    console.log(isId,'isId')
     // 正则测试
     if (!reg.test(userPhone)) {
       showToast({ title: "请输入正确的手机号" });
+      return
     }
     showLoading();
     isId
