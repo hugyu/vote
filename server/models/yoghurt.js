@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const sqlQuery = require("../mysql");
-// const imgLists = [
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/caomei.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/hetao.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/huangtao%20.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/lanmei.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/luhui.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/yanmai.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/yeguo.png"
-// ];
-// const nameList=['草莓','核桃','黄桃','蓝莓','芦荟','燕麦','椰果']
+const imgLists = [
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/caomei.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/hetao.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/huangtao%20.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/lanmei.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/luhui.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/yanmai.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/yoghurt/yeguo.png"
+];
+const nameList=['草莓','核桃','黄桃','蓝莓','芦荟','燕麦','椰果']
 // const createTable = async () => {
 //   try {
 //     //创建表
@@ -18,7 +18,7 @@ const sqlQuery = require("../mysql");
 //     create table if not exists yoghurt (
 //         id int auto_increment,
 //         label varchar(255) not null,
-//         imgUrl char(255) not null,
+//         imgUrl char(255) not null, 
 //         ticket_count int not null default 0,
 //         primary key (id)
 //     ) engine=innodb;
@@ -40,14 +40,14 @@ router.get("/yoghurt", async (req, res) => {
     const result = await sqlQuery(strsql);
     res.send({
       code: 1,
-      message: "请求成功",
+      message: "请求成功", 
       result
     });
   } catch (error) {
     res.send({
       code: -1,
       message: "失败"
-    });
+    }); 
   }
 });
 router.get("/yoghurt/vote", async (req, res) => {

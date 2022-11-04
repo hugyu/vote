@@ -35,7 +35,7 @@ function Index() {
       </View>
       <View className="text-info">
         <Text className="left">—</Text>
-        <Text>h公司饮品投票</Text>
+        <Text>T公司饮品投票</Text>
         <Text className="right">—</Text>
       </View>
       <CountInfo />

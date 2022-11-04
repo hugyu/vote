@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const sqlQuery = require("../mysql");
-// const imgLists = [
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/Pure%20milk/dizhi.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/Pure%20milk/gaogai.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/Pure%20milk/tuozhi.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/Pure%20milk/yuanwei.png",
-// ];
-// const nameList=['低脂高钙','高钙','脱脂','原味']
+const imgLists = [
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/Pure%20milk/dizhi.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/Pure%20milk/gaogai.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/Pure%20milk/tuozhi.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/Pure%20milk/yuanwei.png",
+];
+const nameList=['低脂高钙','高钙','脱脂','原味']
 // const createTable = async () => {
 //   try {
 //     //创建表

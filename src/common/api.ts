@@ -1,6 +1,6 @@
 import { request } from "./tool"
 
-const API_PRE = "http://localhost:3001"
+const API_PRE = "http://localhost:3006"
 // 矿泉水
 export const mineralReq=(data?:any) => request({
     url: `${API_PRE}/mineral`,

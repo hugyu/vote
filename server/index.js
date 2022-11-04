@@ -15,7 +15,7 @@ app.use(express.urlencoded({
   extended:true,
 }))
 models(app);
-const port = 3001;
+const port = 3006;
 app.listen(port, () => {
   console.log(`listning on port ${port}`);
 });

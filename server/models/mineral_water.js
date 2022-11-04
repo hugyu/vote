@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const sqlQuery = require("../mysql");
 
-// const imgLists = ["https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/mineral%20water/binglu.png", "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/mineral%20water/chunyue.png"]
-// const nameList=['冰露','纯悦']
+const imgLists = ["https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/mineral%20water/binglu.png", "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/mineral%20water/chunyue.png"]
+const nameList=['冰露','纯悦']
 // const createTable = async () => {
 //   try {
 //     //创建表

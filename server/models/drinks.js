@@ -1,15 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const sqlQuery = require("../mysql");
-// const imgLists = [
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/fenda.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/guozhi.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/meizhiyuan.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/neneliang1.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/shuidongle.png",
-//   "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/yangguang.png",
-// ];
-// const nameList=['芬达','大红袍','美汁源','能量饮料','水动乐','阳光柠檬']
+const imgLists = [
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/fenda.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/guozhi.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/meizhiyuan.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/neneliang1.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/shuidongle.png",
+  "https://serverless-project-static-files-hgy.oss-cn-hangzhou.aliyuncs.com/exsercise/drinks/yangguang.png",
+];
+const nameList=['芬达','大红袍','美汁源','能量饮料','水动乐','阳光柠檬']
 // const createTable = async () => {
 //   try {
 //     //创建表
