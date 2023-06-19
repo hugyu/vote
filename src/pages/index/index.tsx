@@ -15,15 +15,28 @@ import Area1 from "../components/Area1/area1";
 import CountInfo from "../components/CountInfo/countInfo";
 import { useStore } from "../../store";
 import Taro, { useDidShow } from "@tarojs/taro";
-export const INFO = ["矿泉水", "牛奶", "饮料", "酸奶"];
+import { queryChoices } from "../..//common/api";
 function Index() {
+  //请求类别
+  const [choices, setChoices] = useState<Array<string>>([]);
   // 修改picker选择的下标
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(-1);
   // 修改tab选择地下标
   const [tabIndex, setTabIndex] = useState(0);
   const { userStore } = useStore();
   const [isLogin, setIslogin] = useState(userStore.isLogin);
+  const handleChoices = () => {
+    queryChoices().then((res: { result: Array<any> }) => {
+      const { result } = res;
+      let choices: string[] = [];
+      result.map((res: { id: number; label: string }) => {
+        choices.push(res.label);
+      });
+      setChoices(choices);
+    });
+  };
   useDidShow(() => {
+    handleChoices();
     console.log(userStore.isLogin);
     setIslogin(userStore.isLogin);
   });
@@ -42,7 +55,7 @@ function Index() {
       <View className="picker-container">
         <OsPicker
           className="picker"
-          range={INFO}
+          range={choices}
           value={index}
           onCancel={() => console.log("cancel")}
           onConfirm={e => {
@@ -50,7 +63,10 @@ function Index() {
             setIndex(Number(e));
           }}
         >
-          <OsList title="种类" desc={INFO[index]}></OsList>
+          <OsList
+            title="种类"
+            desc={index == -1 ? "请选择" : choices[index]}
+          ></OsList>
         </OsPicker>
       </View>
       {isLogin ? (
@@ -84,7 +100,7 @@ function Index() {
             }
           >
             <OsTabsPanel current={tabIndex} index={0}>
-              <Area1 index={index} />
+              <Area1 str={choices[index]} index={index} />
             </OsTabsPanel>
             <OsTabsPanel current={tabIndex} index={1}>
               <Area2 />

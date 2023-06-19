@@ -1,31 +1,21 @@
 import { View, Image } from "@tarojs/components";
 import { OsButton } from "ossaui";
-import {
-  drinksReq,
-  drinksVote,
-  mineralReq,
-  mineralVote,
-  pureReq,
-  pureVote,
-  yoghurtReq,
-  yoghurtVote
-} from "../../../common/api";
+import { queryChoicesData, voteReq } from "../../../common/api";
 import "./area1.scss";
 import { useEffect, useState } from "react";
-import Taro from "@tarojs/taro";
-const method = { 0: mineralReq, 1: pureReq, 2: drinksReq, 3: yoghurtReq };
+import Taro, { useDidShow } from "@tarojs/taro";
 const defineCss = {
   0: "width:150rpx",
   2: "width:150rpx",
   1: "width:300rpx",
   3: "width:300rpx"
 };
-const VoteInfo = { 0: mineralVote, 1: pureVote, 2: drinksVote, 3: yoghurtVote };
 interface Props {
   index: number;
+  str: string;
 }
 function Area1(props: Props) {
-  const { index } = props;
+  const { str, index } = props;
   const [voteCount, setVoteCount] = useState(2);
   const [listData, setListData] = useState<
     Array<{ id: number; label: string; imgUrl: string; ticket_count: number }>
@@ -38,14 +28,16 @@ function Area1(props: Props) {
   });
   useEffect(() => {
     setVoteCount(2);
-    method[index]().then(res => {
+    queryChoicesData({ str }).then((res: any) => {
       const { result } = res;
       setListData(result);
     });
   }, [index]);
-  const vote = (label, ticket_count, index) => {
+  
+  
+  const vote = (label, ticket_count, choice) => {
     if (voteCount > 0) {
-      VoteInfo[index]({ label, ticket_count }).then(res => {
+      voteReq({ label, ticket_count, choice }).then((res: any) => {
         const { result } = res;
         setListData(result);
         setVoteCount(pre => pre - 1);
@@ -72,7 +64,7 @@ function Area1(props: Props) {
             <OsButton
               className="button"
               disabled={disabled[index]}
-              onClick={() => vote(data?.label, data?.ticket_count, index)}
+              onClick={() => vote(data?.label, data?.ticket_count, str)}
             >
               我喜欢
             </OsButton>

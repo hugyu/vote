@@ -1,40 +1,18 @@
 import { request } from "./tool"
 
 const API_PRE = "http://localhost:3006"
-// 矿泉水
-export const mineralReq=(data?:any) => request({
-    url: `${API_PRE}/mineral`,
+// 请求类别
+export const queryChoices=(data?:any) => request({
+    url: `${API_PRE}/choice`,
     data:data
 })
-export const mineralVote=(data?:any)=>request({
-    url: `${API_PRE}/mineral/vote`,
+// 请求类别下的数据
+export const queryChoicesData=(data?:any) => request({
+    url: `${API_PRE}/query`,
     data:data
 })
-// 饮料
-export const drinksReq=(data?:any) => request({
-    url: `${API_PRE}/drinks`,
-    data:data
-})
-export const drinksVote=(data?:any)=>request({
-    url: `${API_PRE}/drinks/vote`,
-    data:data
-})
-// 纯牛奶
-export const pureReq=(data?:any) => request({
-    url: `${API_PRE}/pure_milk`,
-    data:data
-})
-export const pureVote=(data?:any)=>request({
-    url: `${API_PRE}/pure_milk/vote`,
-    data:data
-})
-// 酸奶
-export const yoghurtReq=(data?:any) => request({
-    url: `${API_PRE}/yoghurt`,
-    data:data
-})
-export const yoghurtVote=(data?:any)=>request({
-    url: `${API_PRE}/yoghurt/vote`,
+export const voteReq=(data?:any) => request({
+    url: `${API_PRE}/vote`,
     data:data
 })
 // 登录
